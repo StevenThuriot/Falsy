@@ -409,5 +409,160 @@ namespace Falsy.Tests
             //var value = new object();
             //object unbox = value.Falsify();
         }
+
+
+        [TestMethod]
+        public void FalsyShouldSelectTheTruth()
+        {
+            var truth = 20.Falsify();
+            var falsy = 0.Falsify();
+
+            var value1 = truth || falsy;
+            var value2 = falsy || truth;
+
+            Assert.AreSame(truth, value1);
+            Assert.AreSame(truth, value2);
+        }
+
+
+
+
+
+
+
+
+
+
+        [TestMethod]
+        public void TruthOrTruthEqualsTruth()
+        {
+            var value1 = "The Truth".Falsify();
+            var value2 = 2.Falsify();
+
+            if (value1 || value2)
+            {
+
+            }
+            else
+            {
+                Assert.Fail("Truth Or Truth Should Equal Truth");
+            }
+
+            if (!(value1 || value2))
+            {
+                Assert.Fail("Truth Or Truth Should Equal Truth");
+            }
+
+            if (value2 || value1)
+            {
+
+            }
+            else
+            {
+                Assert.Fail("Truth Or Truth Should Equal Truth");
+            }
+
+            if (!(value2 || value1))
+            {
+                Assert.Fail("Truth Or Truth Should Equal Truth");
+            }
+
+            if (value1 || value1)
+            {
+
+            }
+            else
+            {
+                Assert.Fail("Truth Or Truth Should Equal Truth");
+            }
+
+            if (!(value1 || value1))
+            {
+                Assert.Fail("Truth Or Truth Should Equal Truth");
+            }
+        }
+
+        [TestMethod]
+        public void FalsyOrFalsyEqualsFalsy()
+        {
+            var value1 = "".Falsify();
+            var value2 = 0.Falsify();
+
+            if (value1 || value2)
+            {
+                Assert.Fail("Falsy Or Falsy Should Equal Falsy");
+            }
+
+            if (!(value1 || value2))
+            {
+
+            }
+            else
+            {
+                Assert.Fail("Falsy Or Falsy Should Equal Falsy");
+            }
+
+            if (value2 || value1)
+            {
+                Assert.Fail("Falsy Or Falsy Should Equal Falsy");
+            }
+
+            if (!(value2 || value1))
+            {
+
+            }
+            else
+            {
+                Assert.Fail("Falsy Or Falsy Should Equal Falsy");
+            }
+
+            if (value1 || value1)
+            {
+                Assert.Fail("Falsy Or Falsy Should Equal Falsy");
+            }
+
+            if (!(value1 || value1))
+            {
+
+            }
+            else
+            {
+                Assert.Fail("Falsy Or Falsy Should Equal Falsy");
+            }
+        }
+
+        [TestMethod]
+        public void FalsyOrTruthEqualsTruth()
+        {
+            var value1 = "The Truth".Falsify();
+            var value2 = 0.Falsify();
+
+            if (value1 || value2)
+            {
+            }
+            else
+            {
+                Assert.Fail("Falsy Or Truth Should Equal Truth");
+            }
+
+            if (!(value1 || value2))
+            {
+                Assert.Fail("Falsy Or Truth Should Equal Truth");
+            }
+
+            if (value2 || value1)
+            {
+
+            }
+            else
+            {
+                Assert.Fail("Falsy Or Truth Should Equal Truth");
+            }
+
+            if (!(value2 || value1))
+            {
+                Assert.Fail("Falsy Or Truth Should Equal Truth");
+            }
+        }
     }
 }

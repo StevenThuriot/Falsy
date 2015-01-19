@@ -168,6 +168,8 @@ namespace Falsy.NET
                     result = _falsy(_instance);
                     return true;
 
+
+
                 case ExpressionType.IsTrue:
                     result = !_falsy(_instance);
                     return true;
@@ -176,25 +178,55 @@ namespace Falsy.NET
                     result = _falsy(_instance);
                     return true;
 
-                case ExpressionType.And:
-                    result = argumentValue & !_falsy(_instance);
-                    return true;
-                case ExpressionType.AndAlso:
-                    result = argumentValue && !_falsy(_instance);
-                    return true;
 
                 case ExpressionType.Equal:
                     result = argumentValue == !_falsy(_instance);
                     return true;
+
                 case ExpressionType.NotEqual:
                     result = argumentValue != !_falsy(_instance);
                     return true;
 
-                case ExpressionType.Or:
-                    result = argumentValue | !_falsy(_instance);
+
+
+
+
+                case ExpressionType.And:
+                case ExpressionType.AndAlso:
+                    result = argumentValue && !_falsy(_instance);
                     return true;
+
+
+
+                case ExpressionType.Or:
                 case ExpressionType.OrElse:
-                    result = argumentValue || !_falsy(_instance);
+                    if (binder.ReturnType == typeof (bool))
+                    {
+                        result = argumentValue || !_falsy(_instance);
+                    }
+                    else
+                    {
+                        if (!_falsy(_instance))
+                        {
+                            if (binder.ReturnType == InstanceType)
+                            {
+                                result = _instance;
+                            }
+                            else
+                            {
+                                result = this;
+                            }
+                        }
+                        else if (argumentValue)
+                        {
+                            result = arg;
+                        }
+                        else
+                        {
+                            result = false;
+                        }
+                    }
+
                     return true;
             }
 
