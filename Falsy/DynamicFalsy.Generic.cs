@@ -34,9 +34,6 @@ namespace Falsy.NET
         private static readonly Predicate<T> _falsy;
         private static readonly Dictionary<string, Info> _properties;
 
-
-        private readonly T _instance;
-
         static DynamicFalsy()
         {
             Predicate<T> nullCheck = obj => ReferenceEquals(null, obj);
@@ -84,9 +81,18 @@ namespace Falsy.NET
                 .ToDictionary(x => x.Name, x => x);
         }
 
+
+
+
+
+
+        private readonly T _instance;
+        private Lazy<bool> _booleanValue;
+
         public DynamicFalsy(T instance)
         {
             _instance = instance;
+            _booleanValue = new Lazy<bool>(() => _falsy(_instance));
         }
 
 
@@ -125,7 +131,7 @@ namespace Falsy.NET
         {
             if (binder.ReturnType == typeof (bool))
             {
-                result = !_falsy(_instance);
+                result = !_booleanValue.Value;
                 return true;
             }
 
@@ -165,26 +171,26 @@ namespace Falsy.NET
             switch (binder.Operation)
             {
                 case ExpressionType.Not:
-                    result = _falsy(_instance);
+                    result = _booleanValue.Value;
                     return true;
 
 
 
                 case ExpressionType.IsTrue:
-                    result = !_falsy(_instance);
+                    result = !_booleanValue.Value;
                     return true;
 
                 case ExpressionType.IsFalse:
-                    result = _falsy(_instance);
+                    result = _booleanValue.Value;
                     return true;
 
 
                 case ExpressionType.Equal:
-                    result = argumentValue == !_falsy(_instance);
+                    result = argumentValue == !_booleanValue.Value;
                     return true;
 
                 case ExpressionType.NotEqual:
-                    result = argumentValue != !_falsy(_instance);
+                    result = argumentValue != !_booleanValue.Value;
                     return true;
 
 
@@ -193,7 +199,7 @@ namespace Falsy.NET
 
                 case ExpressionType.And:
                 case ExpressionType.AndAlso:
-                    result = argumentValue && !_falsy(_instance);
+                    result = argumentValue && !_booleanValue.Value;
                     return true;
 
 
@@ -202,11 +208,11 @@ namespace Falsy.NET
                 case ExpressionType.OrElse:
                     if (binder.ReturnType == typeof (bool))
                     {
-                        result = argumentValue || !_falsy(_instance);
+                        result = argumentValue || !_booleanValue.Value;
                     }
                     else
                     {
-                        if (!_falsy(_instance))
+                        if (!_booleanValue.Value)
                         {
                             if (binder.ReturnType == InstanceType)
                             {
@@ -237,7 +243,7 @@ namespace Falsy.NET
         {
             if (binder.Operation == ExpressionType.Not)
             {
-                result = _falsy(_instance);
+                result = _booleanValue.Value;
                 return true;
             }
 
@@ -245,13 +251,13 @@ namespace Falsy.NET
             {
                 if (binder.Operation == ExpressionType.IsTrue)
                 {
-                    result = !_falsy(_instance);
+                    result = !_booleanValue.Value;
                     return true;
                 }
 
                 if (binder.Operation == ExpressionType.IsFalse)
                 {
-                    result = _falsy(_instance);
+                    result = _booleanValue.Value;
                     return true;
                 }
             }
@@ -262,7 +268,7 @@ namespace Falsy.NET
 
         protected internal override bool GetBooleanValue()
         {
-            return !_falsy(_instance);
+            return !_booleanValue.Value;
         }
 
         protected override bool InternalEquals(object o)
