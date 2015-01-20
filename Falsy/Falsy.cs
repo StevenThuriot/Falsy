@@ -23,26 +23,5 @@ namespace Falsy.NET
         {
             return new DynamicFalsy<T>(instance);
         }
-
-        //private static readonly Dictionary<Type, Func<object, dynamic>> _cache = new Dictionary<Type, Func<object, dynamic>>();
-        //internal static dynamic Falsify(this object instance, Type propertyType)
-        //{
-        //    Func<object, dynamic> ctor;
-        //    if (_cache.TryGetValue(propertyType, out ctor))
-        //        return ctor(instance);
-
-        //    var info = typeof(DynamicFalsy<>).MakeGenericType(propertyType).GetConstructor(new[] { propertyType });
-
-        //    var ctorType = Expression.Parameter(typeof(object));
-        //    var convert = Expression.Convert(ctorType, propertyType);
-        //    var @new = Expression.New(info, convert);
-        //    var lambda = Expression.Lambda<Func<object, dynamic>>(@new, ctorType);
-
-        //    var make = lambda.Compile();
-
-        //    _cache[propertyType] = make;
-
-        //    return make(instance);
-        //}
     }
 }

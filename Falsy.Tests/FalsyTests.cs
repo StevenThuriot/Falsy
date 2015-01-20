@@ -564,5 +564,51 @@ namespace Falsy.Tests
                 Assert.Fail("Falsy Or Truth Should Equal Truth");
             }
         }
+
+
+
+
+
+
+        class Toggle
+        {
+            public bool Toggled { get; set; }
+        }
+        class TestClass
+        {
+            public void Run(Toggle toggle)
+            {
+                toggle.Toggled = true;
+            }
+            public object Run2(string message)
+            {
+                return message;
+            }
+        }
+
+        [TestMethod]
+        public void FalsyCanCallMethods()
+        {
+            var falsy = "test".Falsify();
+            var upper = falsy.ToUpper();
+
+            Assert.AreEqual(upper, "TEST");
+
+
+            var test = new TestClass().Falsify();
+            var toggle = new Toggle();
+
+            Assert.IsFalse(toggle.Toggled);
+
+            test.Run(toggle);
+
+            Assert.IsTrue(toggle.Toggled);
+
+            var msg = "Message";
+
+            var result = test.Run2(msg);
+
+            Assert.AreEqual(msg, result);
+        }
     }
 }

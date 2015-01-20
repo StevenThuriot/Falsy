@@ -17,38 +17,32 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Dynamic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
 
 namespace Falsy.NET
 {
     [DebuggerDisplay("Falsy: {_instance} == {GetBooleanValue()}")]
     public sealed class DynamicFalsy<T> : DynamicFalsy
     {
-        public static readonly Type InstanceType = typeof (T);
-        
-        private static readonly Predicate<T> _falsy;
-        private static readonly Dictionary<string, Info> _properties;
+        private static readonly Predicate<T> Falsy;
 
         static DynamicFalsy()
         {
             Predicate<T> nullCheck = obj => ReferenceEquals(null, obj);
 
-            if (InstanceType == typeof (string))
+            if (Constants.Typed<T>.OwnerType == Constants.StringType)
             {
-                _falsy = obj => nullCheck(obj) || ((string) (object) obj) == "";
+                Falsy = obj => nullCheck(obj) || ((string) (object) obj) == "";
             }
-            else if (InstanceType == typeof (int))
+            else if (Constants.Typed<T>.OwnerType == Constants.IntegerType)
             {
-                _falsy = obj => nullCheck(obj) || ((int) (object) obj) == 0;
+                Falsy = obj => nullCheck(obj) || ((int) (object) obj) == 0;
             }
-            else if (InstanceType == typeof (double))
+            else if (Constants.Typed<T>.OwnerType == Constants.DoubleType)
             {
-                _falsy = obj =>
+                Falsy = obj =>
                 {
                     if (nullCheck(obj)) return true;
 
@@ -56,9 +50,9 @@ namespace Falsy.NET
                     return Double.IsNaN(value) || Math.Abs(value) < Double.Epsilon;
                 };
             }
-            else if (InstanceType == typeof (float))
+            else if (Constants.Typed<T>.OwnerType == Constants.FloatType)
             {
-                _falsy = obj =>
+                Falsy = obj =>
                 {
                     if (nullCheck(obj)) return true;
 
@@ -66,19 +60,14 @@ namespace Falsy.NET
                     return Single.IsNaN(value) || Math.Abs(value) < Single.Epsilon;
                 };
             }
-            else if (InstanceType == typeof (bool))
+            else if (Constants.Typed<T>.OwnerType == Constants.BooleanType)
             {
-                _falsy = obj => nullCheck(obj) || ((bool) (object) obj) == false;
+                Falsy = obj => nullCheck(obj) || ((bool) (object) obj) == false;
             }
             else
             {
-                _falsy = nullCheck;
+                Falsy = nullCheck;
             }
-
-            _properties = InstanceType.GetMembers(BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.GetField)
-                .Where(x => ((MemberTypes.Property | MemberTypes.Field) & x.MemberType) == x.MemberType)
-                .Select(x => new Info(x))
-                .ToDictionary(x => x.Name, x => x);
         }
 
 
@@ -87,25 +76,20 @@ namespace Falsy.NET
 
 
         private readonly T _instance;
-        private Lazy<bool> _booleanValue;
+        private readonly Lazy<bool> _booleanValue;
 
         public DynamicFalsy(T instance)
         {
             _instance = instance;
-            _booleanValue = new Lazy<bool>(() => _falsy(_instance));
+            _booleanValue = new Lazy<bool>(() => Falsy(_instance));
         }
 
 
         public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
-            Info info;
-            if (!_properties.TryGetValue(binder.Name, out info))
-            {
-                result = null;
-                return false;
-            }
-
-            result = info.GetValue(_instance).Falsify(/*info.ReturnType*/);
+            //TODO: Fields?
+            var value = TypeInfo<T>.GetProperty(_instance, binder.Name);
+            result = NET.Falsy.Falsify(value);
             return true;
         }
 
@@ -117,8 +101,9 @@ namespace Falsy.NET
 
         public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
         {
-            //TODO??
-            return base.TryInvokeMember(binder, args, out result);
+            //TODO: Falsify result?
+            result = TypeInfo<T>.Call(_instance, binder.Name, args);
+            return true;
         }
 
         public override bool TryInvoke(InvokeBinder binder, object[] args, out object result)
@@ -129,13 +114,13 @@ namespace Falsy.NET
 
         public override bool TryConvert(ConvertBinder binder, out object result)
         {
-            if (binder.ReturnType == typeof (bool))
+            if (binder.ReturnType == Constants.BooleanType)
             {
                 result = !_booleanValue.Value;
                 return true;
             }
 
-            if (binder.ReturnType == InstanceType)
+            if (binder.ReturnType == Constants.Typed<T>.OwnerType)
             {
                 result = _instance;
                 return true;
@@ -146,7 +131,7 @@ namespace Falsy.NET
 
         public override bool TryBinaryOperation(BinaryOperationBinder binder, object arg, out object result)
         {
-            //if (binder.ReturnType != typeof (bool))
+            //if (binder.ReturnType != Constants.BooleanType)
             //    return base.TryBinaryOperation(binder, arg, out result);
             
             bool argumentValue;
@@ -206,7 +191,7 @@ namespace Falsy.NET
 
                 case ExpressionType.Or:
                 case ExpressionType.OrElse:
-                    if (binder.ReturnType == typeof (bool))
+                    if (binder.ReturnType == Constants.BooleanType)
                     {
                         result = argumentValue || !_booleanValue.Value;
                     }
@@ -214,7 +199,7 @@ namespace Falsy.NET
                     {
                         if (!_booleanValue.Value)
                         {
-                            if (binder.ReturnType == InstanceType)
+                            if (binder.ReturnType == Constants.Typed<T>.OwnerType)
                             {
                                 result = _instance;
                             }
@@ -247,7 +232,7 @@ namespace Falsy.NET
                 return true;
             }
 
-            if (binder.ReturnType == typeof (bool))
+            if (binder.ReturnType == Constants.BooleanType)
             {
                 if (binder.Operation == ExpressionType.IsTrue)
                 {
@@ -274,48 +259,6 @@ namespace Falsy.NET
         protected override bool InternalEquals(object o)
         {
             return o is T && Equals(_instance, o);
-        }
-
-        private class Info
-        {
-            //Fields for speed!
-            public readonly string Name;
-            //public readonly Type ReturnType;
-
-            private readonly Func<T, object> _getValue;
-
-            public Info(MemberInfo memberInfo)
-            {
-                Name = memberInfo.Name;
-
-                var parameter = Expression.Parameter(InstanceType, "instance");
-                Expression memberExpression;
-
-                var info = memberInfo as FieldInfo;
-                if (info != null)
-                {
-                    //Field
-                    //ReturnType = info.FieldType;
-                    memberExpression = Expression.Field(parameter, info);
-                }
-                else
-                {
-                    //Property
-                    var propertyInfo = ((PropertyInfo) memberInfo);
-                    //ReturnType = propertyInfo.PropertyType;
-                    memberExpression = Expression.Property(parameter, propertyInfo);
-                }
-
-                var boxExpression = Expression.Convert(memberExpression, typeof (object));
-                var lambda = Expression.Lambda<Func<T, object>>(boxExpression, parameter);
-
-                _getValue = lambda.Compile();
-            }
-
-            public dynamic GetValue(T instance)
-            {
-                return _getValue(instance);
-            }
         }
     }
 }
