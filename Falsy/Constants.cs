@@ -19,27 +19,15 @@
 #endregion
 
 using System;
+using Invocation;
 
 namespace Falsy.NET
 {
-    static class Constants
+    static class Constants<T>
     {
-        public static readonly Type BooleanType = typeof (bool);
-        public static readonly Type FloatType = typeof (float);
-        public static readonly Type StringType = typeof (string);
-        public static readonly Type DoubleType = typeof (double);
-        public static readonly Type IntegerType = typeof (int);
-        public static readonly Type ObjectType = typeof (object);
-        public static readonly Type ObjectArrayType = typeof (object[]);
-        public static readonly Type VoidType = typeof (void);
-
-        internal class Typed<T>
-        {
-            public static readonly Type OwnerType = typeof (T);
-            public static readonly Type InvokeType = typeof (Invoke<T>);
-            public delegate object Invoker(T target, object[] args);
-            public static readonly Type InvokerType = typeof (Invoker);
-            public static readonly Type[] ArgTypes = { OwnerType, ObjectArrayType };
-        }
+        public static readonly Type InvokeType = typeof(Invoke<T>);
+        public delegate object Invoker(T target, object[] args);
+        public static readonly Type InvokerType = typeof(Invoker);
+        public static readonly Type[] ArgTypes = {Constants.Typed<T>.OwnerType, Constants.ObjectArrayType};
     }
 }

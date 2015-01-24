@@ -570,22 +570,6 @@ namespace Falsy.Tests
 
 
 
-        class Toggle
-        {
-            public bool Toggled { get; set; }
-        }
-        class TestClass
-        {
-            public void Run(Toggle toggle)
-            {
-                toggle.Toggled = true;
-            }
-            public object Run2(string message)
-            {
-                return message;
-            }
-        }
-
         [TestMethod]
         public void FalsyCanCallMethods()
         {

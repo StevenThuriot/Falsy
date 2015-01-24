@@ -20,6 +20,7 @@ using System;
 using System.Diagnostics;
 using System.Dynamic;
 using System.Linq.Expressions;
+using Invocation;
 
 namespace Falsy.NET
 {
@@ -88,22 +89,26 @@ namespace Falsy.NET
         public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
             //TODO: Fields?
-            var value = TypeInfo<T>.GetProperty(_instance, binder.Name);
+
+            object prop;
+            var @return = TypeInfo<T>.TryGetProperty(_instance, binder.Name, out prop);
+
+            dynamic value = prop;
             result = NET.Falsy.Falsify(value);
-            return true;
+
+            return @return;
         }
 
         public override bool TrySetMember(SetMemberBinder binder, object value)
         {
-            //TODO??
-            return base.TrySetMember(binder, value);
+            //TODO: Fields?
+            return TypeInfo<T>.TrySetProperty(_instance, binder.Name, value);
         }
 
         public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
         {
             //TODO: Falsify result?
-            result = TypeInfo<T>.Call(_instance, binder.Name, args);
-            return true;
+            return TypeInfo<T>.TryCall(_instance, binder, args, out  result);
         }
 
         public override bool TryInvoke(InvokeBinder binder, object[] args, out object result)

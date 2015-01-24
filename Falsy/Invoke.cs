@@ -20,7 +20,7 @@ using System;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Reflection.Emit;
+using Invocation;
 
 namespace Falsy.NET
 {
@@ -31,9 +31,9 @@ namespace Falsy.NET
             return new Lazy<Func<T, object>>(() => Create(info));
         }
 
-        public static Lazy<Constants.Typed<T>.Invoker> CreateLazy(MethodInfo info)
+        public static Lazy<Constants<T>.Invoker> CreateLazy(MethodInfo info)
         {
-            return new Lazy<Constants.Typed<T>.Invoker>(() => Create(info));
+            return new Lazy<Constants<T>.Invoker>(() => Create(info));
         }
 
         public static Lazy<Func<T, object>> CreateLazy(FieldInfo info)
@@ -76,7 +76,7 @@ namespace Falsy.NET
 
 
 
-        public static Constants.Typed<T>.Invoker Create(MethodInfo method)
+        public static Constants<T>.Invoker Create(MethodInfo method)
         {
             var instance = Expression.Parameter(Constants.Typed<T>.OwnerType, "instance");
             var @params = Expression.Parameter(Constants.ObjectArrayType, "params");
@@ -111,7 +111,7 @@ namespace Falsy.NET
             }
 
 
-            var lambda = Expression.Lambda<Constants.Typed<T>.Invoker>(wrapper, "invoker", new[] {instance, @params});
+            var lambda = Expression.Lambda<Constants<T>.Invoker>(wrapper, "invoker", new[] {instance, @params});
             var invoker = lambda.Compile();
 
             return invoker;
