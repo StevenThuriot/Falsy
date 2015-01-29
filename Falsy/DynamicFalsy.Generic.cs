@@ -96,14 +96,17 @@ namespace Falsy.NET
         public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
             //TODO: Fields?
-
             object prop;
-            var @return = TypeInfo<T>.TryGetProperty(_instance, binder.Name, out prop);
 
-            dynamic value = prop;
-            result = NET.Falsy.Falsify(value);
+            if (TypeInfo<T>.TryGetProperty(_instance, binder.Name, out prop))
+            {
+                dynamic value = prop;
+                result = NET.Falsy.Falsify(value);
+                return true;
+            }
 
-            return @return;
+            result = UndefinedFalsy.Value;
+            return true;
         }
 
         public override bool TrySetMember(SetMemberBinder binder, object value)

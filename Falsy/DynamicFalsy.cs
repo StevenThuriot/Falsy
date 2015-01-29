@@ -40,7 +40,7 @@ namespace Falsy.NET
             var falsy = arg as DynamicFalsy;
             if (!ReferenceEquals(null, falsy))
                 return Equals(falsy);
-
+            
             if (IsFalsyNull())
                 //The falsy values null and undefined are not equivalent to anything except themselves
                 return FalsyNull(arg);
@@ -92,7 +92,7 @@ namespace Falsy.NET
 
         public static bool FalsyNull(object arg)
         {
-            return ReferenceEquals(null, arg) /*|| Equals(undefined, arg)*/;
+            return ReferenceEquals(null, arg) || ReferenceEquals(UndefinedFalsy.Value, arg);
         }
 
         public static bool FalsyNaN(object arg)

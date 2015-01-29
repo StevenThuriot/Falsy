@@ -18,6 +18,7 @@
 
 using System;
 using Falsy.NET;
+using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Falsy.Tests
@@ -631,9 +632,22 @@ namespace Falsy.Tests
             Assert.IsTrue(g);//Problem case..
             Assert.IsTrue(g2);//Problem case..
             Assert.IsTrue(g3);
+        }
 
-            //bool h = (undefined == undefined); // true
-            //bool i = (undefined == null); // true
+        [TestMethod]
+        public void UndefinedShouldBeFalseButNotEquivalent()
+        {
+            bool h = (UndefinedFalsy.Value == false.Falsify()); // false
+            bool h2 = (UndefinedFalsy.Value == false); // false
+            Assert.IsFalse(h);
+            Assert.IsFalse(h2);
+
+            bool i = (UndefinedFalsy.Value == null); // true
+            bool i2 = (UndefinedFalsy.Value == NET.Falsy.Falsify<object>(null)); // true
+            bool i3 = (NET.Falsy.Falsify<object>(null) == UndefinedFalsy.Value); // true
+            Assert.IsTrue(i);
+            Assert.IsTrue(i2);
+            Assert.IsTrue(i3);
         }
 
         [TestMethod]
@@ -666,6 +680,44 @@ namespace Falsy.Tests
             Assert.IsFalse(m);
             Assert.IsFalse(m2);
             Assert.IsFalse(m3);
+        }
+
+
+        [TestMethod]
+        public void UndefinedShouldBeFalsy()
+        {
+            if (UndefinedFalsy.Value)
+            {
+                Assert.Fail("Undefined Should Be Falsy");
+            }
+
+            var falsy = new object().Falsify();
+            var undefined = falsy.Test;
+
+            if (undefined)
+            {
+                Assert.Fail("Undefined Should Be Falsy");
+            }
+        }
+
+        [TestMethod]
+        public void UndefinedPropertiesShouldReturnUndefined()
+        {
+            var falsy = new object().Falsify();
+
+            var undefined = falsy.Test;
+
+            Assert.AreEqual(undefined, UndefinedFalsy.Value, "Undefined Properties Should Return Undefined");
+        }
+
+        [TestMethod, ExpectedException(typeof(RuntimeBinderException))]
+        public void UndefinedPropertiesOfUndefinedPropertiesShouldCrash()
+        {
+            var falsy = new object().Falsify();
+
+            var crash = falsy.Test.Test;
+
+            Assert.Fail("Should have crashed.");
         }
     }
 }

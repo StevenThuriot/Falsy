@@ -20,9 +20,15 @@ namespace Falsy.NET
 {
     public static class Falsy
     {
+
         public static dynamic Falsify<T>(this T instance)
         {
             return new DynamicFalsy<T>(instance);
+        }
+
+        public static dynamic Falsify(this DynamicFalsy falsy)
+        {
+            return falsy;
         }
     }
 }
