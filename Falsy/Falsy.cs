@@ -15,6 +15,7 @@
 // limitations under the License.
 // 
 #endregion
+
 namespace Falsy.NET
 {
     public static class Falsy

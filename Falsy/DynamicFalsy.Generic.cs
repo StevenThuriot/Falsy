@@ -37,10 +37,6 @@ namespace Falsy.NET
             {
                 Falsy = obj => nullCheck(obj) || ((string) (object) obj) == "";
             }
-            else if (Constants.Typed<T>.OwnerType == Constants.IntegerType)
-            {
-                Falsy = obj => nullCheck(obj) || ((int) (object) obj) == 0;
-            }
             else if (Constants.Typed<T>.OwnerType == Constants.DoubleType)
             {
                 Falsy = obj =>
@@ -61,6 +57,10 @@ namespace Falsy.NET
                     return Single.IsNaN(value) || Math.Abs(value) < Single.Epsilon;
                 };
             }
+            else if (Constants.Typed<T>.OwnerType.IsNumeric())
+            {
+                Falsy = obj => nullCheck(obj) || ((int) (object) obj) == 0;
+            }
             else if (Constants.Typed<T>.OwnerType == Constants.BooleanType)
             {
                 Falsy = obj => nullCheck(obj) || ((bool) (object) obj) == false;
@@ -77,12 +77,19 @@ namespace Falsy.NET
 
 
         private readonly T _instance;
-        private readonly Lazy<bool> _booleanValue;
+        private readonly Lazy<bool> _isFalse;
+        private readonly Lazy<bool> _isFalsyEquivalent;
+        private readonly Lazy<bool> _isFalsyNull;
+        private readonly Lazy<bool> _isFalsyNaN;
 
         public DynamicFalsy(T instance)
         {
             _instance = instance;
-            _booleanValue = new Lazy<bool>(() => Falsy(_instance));
+            _isFalse = new Lazy<bool>(() => Falsy(_instance));
+            
+            _isFalsyNaN = new Lazy<bool>(() => FalsyNaN(_instance));
+            _isFalsyNull = new Lazy<bool>(() => FalsyNull(_instance));
+            _isFalsyEquivalent = new Lazy<bool>(() => FalsyEquivalent(_instance));
         }
 
 
@@ -121,7 +128,7 @@ namespace Falsy.NET
         {
             if (binder.ReturnType == Constants.BooleanType)
             {
-                result = !_booleanValue.Value;
+                result = !_isFalse.Value;
                 return true;
             }
 
@@ -136,51 +143,29 @@ namespace Falsy.NET
 
         public override bool TryBinaryOperation(BinaryOperationBinder binder, object arg, out object result)
         {
-            //if (binder.ReturnType != Constants.BooleanType)
-            //    return base.TryBinaryOperation(binder, arg, out result);
-            
-            bool argumentValue;
-            if (arg is bool)
-            {
-                argumentValue = (bool) arg;
-            }
-            else
-            {
-                var falsy = arg as DynamicFalsy;
-                if (!ReferenceEquals(null, falsy))
-                {
-                    argumentValue = falsy.GetBooleanValue();
-                }
-                else
-                {
-                    return base.TryBinaryOperation(binder, arg, out result);
-                }
-            }
-
-
             switch (binder.Operation)
             {
                 case ExpressionType.Not:
-                    result = _booleanValue.Value;
+                    result = _isFalse.Value;
                     return true;
 
 
 
                 case ExpressionType.IsTrue:
-                    result = !_booleanValue.Value;
+                    result = !_isFalse.Value;
                     return true;
 
                 case ExpressionType.IsFalse:
-                    result = _booleanValue.Value;
+                    result = _isFalse.Value;
                     return true;
 
 
                 case ExpressionType.Equal:
-                    result = argumentValue == !_booleanValue.Value;
+                    result = Equals(arg);
                     return true;
 
                 case ExpressionType.NotEqual:
-                    result = argumentValue != !_booleanValue.Value;
+                    result = !Equals(arg);
                     return true;
 
 
@@ -189,7 +174,7 @@ namespace Falsy.NET
 
                 case ExpressionType.And:
                 case ExpressionType.AndAlso:
-                    result = argumentValue && !_booleanValue.Value;
+                    result = !_isFalse.Value && Equals(arg);
                     return true;
 
 
@@ -198,11 +183,11 @@ namespace Falsy.NET
                 case ExpressionType.OrElse:
                     if (binder.ReturnType == Constants.BooleanType)
                     {
-                        result = argumentValue || !_booleanValue.Value;
+                        result = !_isFalse.Value || !Equals(arg);
                     }
                     else
                     {
-                        if (!_booleanValue.Value)
+                        if (!_isFalse.Value)
                         {
                             if (binder.ReturnType == Constants.Typed<T>.OwnerType)
                             {
@@ -213,7 +198,7 @@ namespace Falsy.NET
                                 result = this;
                             }
                         }
-                        else if (argumentValue)
+                        else if (!Equals(arg))
                         {
                             result = arg;
                         }
@@ -233,7 +218,7 @@ namespace Falsy.NET
         {
             if (binder.Operation == ExpressionType.Not)
             {
-                result = _booleanValue.Value;
+                result = _isFalse.Value;
                 return true;
             }
 
@@ -241,13 +226,13 @@ namespace Falsy.NET
             {
                 if (binder.Operation == ExpressionType.IsTrue)
                 {
-                    result = !_booleanValue.Value;
+                    result = !_isFalse.Value;
                     return true;
                 }
 
                 if (binder.Operation == ExpressionType.IsFalse)
                 {
-                    result = _booleanValue.Value;
+                    result = _isFalse.Value;
                     return true;
                 }
             }
@@ -258,12 +243,65 @@ namespace Falsy.NET
 
         protected internal override bool GetBooleanValue()
         {
-            return !_booleanValue.Value;
+            return !_isFalse.Value;
         }
+
+        public override bool IsFalsyEquivalent()
+        {
+            return _isFalsyEquivalent.Value;
+        }
+
+        public override bool IsFalsyNull()
+        {
+            return _isFalsyNull.Value;
+        }
+
+        public override bool IsFalsyNaN()
+        {
+            return _isFalsyNaN.Value;
+        }
+
+
+        public override bool Equals(DynamicFalsy arg)
+        {
+            if (ReferenceEquals(null, arg))
+                return _isFalsyNull.Value;
+
+            if (_isFalsyNull.Value)
+                //The falsy values null and undefined are not equivalent to anything except themselves
+                return arg.IsFalsyNull();
+
+            if (_isFalsyEquivalent.Value)
+                //The falsy values false, 0 (zero), and "" (empty string) are all equivalent and can be compared against each other
+                return arg.IsFalsyEquivalent();
+
+            if (_isFalsyNaN.Value)
+                //Finally, the falsy value NaN is not equivalent to anything — including NaN!
+                return false;
+
+            if (_isFalse.Value == arg.GetBooleanValue())
+                //Different boolean values, thus can't be equal.
+                return false; 
+            
+            return !arg.IsFalsyNull() && !arg.IsFalsyNaN();
+        }
+
 
         protected override bool InternalEquals(object o)
         {
-            return o is T && Equals(_instance, o);
+            if (ReferenceEquals(null, o))
+                return _isFalsyNull.Value;
+
+            //If o is T, then compare it to our actual value
+            if (o is T)
+                return Equals(o, _instance);
+
+            //The falsy values false, 0 (zero), and "" (empty string) are all equivalent and can be compared against each other
+            if (FalsyEquivalent(o))
+                return _isFalse.Value;
+
+            //Note: the falsy value NaN is not equivalent to anything — including NaN!
+            return false;
         }
     }
 }

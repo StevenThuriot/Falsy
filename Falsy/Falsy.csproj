@@ -105,6 +105,7 @@
     <Compile Include="Falsy.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Invoke.cs" />
+    <Compile Include="NumericInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

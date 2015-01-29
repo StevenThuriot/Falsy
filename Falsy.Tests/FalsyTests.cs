@@ -42,26 +42,6 @@ namespace Falsy.Tests
             {
                 Assert.Fail("Null should be false.");
             }
-
-            if (value == true)
-            {
-                Assert.Fail("Null should be false.");
-            }
-
-            if (value != false)
-            {
-                Assert.Fail("Null should be false.");
-            }
-
-            if (true == value)
-            {
-                Assert.Fail("Null should be false.");
-            }
-
-            if (false != value)
-            {
-                Assert.Fail("Null should be false.");
-            }
         }
 
         [TestMethod]
@@ -593,6 +573,99 @@ namespace Falsy.Tests
             var result = test.Run2(msg);
 
             Assert.AreEqual(msg, result);
+        }
+
+
+        [TestMethod]
+        public void InverseShouldWork()
+        {
+            bool a = !!(0.Falsify()); // variable is set to false
+            Assert.IsFalse(a);
+
+            bool b = !!("0".Falsify()); // true
+            Assert.IsTrue(b);
+        }
+
+        [TestMethod]
+        public void ZeroEmptyAndFalseShouldBeEquivalent()
+        {
+            bool c = (false == 0.Falsify()); // true
+            bool c2 = (false.Falsify() == 0); // true
+            bool c3 = (false.Falsify() == 0d); // true
+            bool c4 = (false.Falsify() == 0m); // true
+            bool c5 = (false.Falsify() == 0.Falsify()); // true
+            Assert.IsTrue(c);
+            Assert.IsTrue(c2);
+            Assert.IsTrue(c3);
+            Assert.IsTrue(c4);
+            Assert.IsTrue(c5);
+
+            bool d = (false == "".Falsify()); // true
+            bool d2 = (false.Falsify() == ""); // true
+            bool d3 = (false.Falsify() == "".Falsify()); // true
+            Assert.IsTrue(d);
+            Assert.IsTrue(d2);
+            Assert.IsTrue(d3);
+
+            bool e = (0 == "".Falsify()); // true
+            bool e2 = (0.Falsify() == ""); // true
+            bool e3 = (0.Falsify() == "".Falsify()); // true
+            Assert.IsTrue(e);
+            Assert.IsTrue(e2);
+            Assert.IsTrue(e3);
+        }
+
+        [TestMethod]
+        public void NullShouldBeFalseButNotEquivalent()
+        {
+            bool f = (NET.Falsy.Falsify<object>(null) == false); // false
+            bool f2 = (null == false.Falsify()); // false
+            bool f3 = (NET.Falsy.Falsify<object>(null) == false.Falsify()); // false
+            Assert.IsFalse(f);
+            Assert.IsFalse(f2);
+            Assert.IsFalse(f3);
+
+            bool g = (null == NET.Falsy.Falsify<object>(null)); // true
+            bool g2 = (NET.Falsy.Falsify<object>(null) == null); // true
+            bool g3 = (NET.Falsy.Falsify<object>(null) == NET.Falsy.Falsify<object>(null)); // true
+            Assert.IsTrue(g);//Problem case..
+            Assert.IsTrue(g2);//Problem case..
+            Assert.IsTrue(g3);
+
+            //bool h = (undefined == undefined); // true
+            //bool i = (undefined == null); // true
+        }
+
+        [TestMethod]
+        public void NaNShouldBeAWeirdo()
+        {
+            bool j = (Single.NaN.Falsify() == null); // false
+            bool j2 = (Single.NaN == NET.Falsy.Falsify<object>(null)); // false
+            bool j3 = (Single.NaN.Falsify() == NET.Falsy.Falsify<object>(null)); // false
+            Assert.IsFalse(j);
+            Assert.IsFalse(j2);
+            Assert.IsFalse(j3);
+
+            bool k = (Single.NaN.Falsify() == Single.NaN); // false
+            bool k2 = (Single.NaN == Single.NaN.Falsify()); // false
+            bool k3 = (Single.NaN.Falsify() == Single.NaN.Falsify()); // false
+            Assert.IsFalse(k);
+            Assert.IsFalse(k2);
+            Assert.IsFalse(k3);
+
+            bool l = (double.NaN.Falsify() == null); // false
+            bool l2 = (double.NaN == NET.Falsy.Falsify<object>(null)); // false
+            bool l3 = (double.NaN.Falsify() == NET.Falsy.Falsify<object>(null)); // false
+            Assert.IsFalse(l);
+            Assert.IsFalse(l2);
+            Assert.IsFalse(l3);
+
+            bool m = (double.NaN.Falsify() == double.NaN); // false
+            bool m2 = (double.NaN == double.NaN.Falsify()); // false
+            bool m3 = (double.NaN.Falsify() == double.NaN.Falsify()); // false
+            Assert.IsFalse(m);
+            Assert.IsFalse(m2);
+            Assert.IsFalse(m3);
         }
     }
 }

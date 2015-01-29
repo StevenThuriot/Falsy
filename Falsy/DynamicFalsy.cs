@@ -16,52 +16,98 @@
 // 
 #endregion
 
+using System;
 using System.Dynamic;
 
 namespace Falsy.NET
 {
     public abstract class DynamicFalsy : DynamicObject
     {
-        protected bool Equals(DynamicFalsy other)
-        {
-            var bool1 = GetBooleanValue();
-            var bool2 = other.GetBooleanValue();
-
-            return bool1 == bool2;
-        }
         protected bool Equals(bool other)
         {
-            var value = GetBooleanValue();
-            return value == other;
+            var isFalsyEquivalent = IsFalsyEquivalent();
+            return other ? !isFalsyEquivalent : isFalsyEquivalent;
         }
 
-        public override bool Equals(object obj)
+        public sealed override bool Equals(object arg)
         {
-            if (ReferenceEquals(null, obj)) return Equals(false);
-            if (obj is bool) return Equals((bool)obj);
-            
-            var falsy = obj as DynamicFalsy;
-            if (!ReferenceEquals(null, falsy)) return Equals(falsy);
+            if (ReferenceEquals(null, arg))
+                return IsFalsyNull();
 
-            return InternalEquals(obj);
+            if (arg is bool)
+                return Equals((bool)arg);
+
+            var falsy = arg as DynamicFalsy;
+            if (!ReferenceEquals(null, falsy))
+                return Equals(falsy);
+
+            if (IsFalsyNull())
+                //The falsy values null and undefined are not equivalent to anything except themselves
+                return FalsyNull(arg);
+
+            if (IsFalsyEquivalent())
+                //The falsy values false, 0 (zero), and "" (empty string) are all equivalent and can be compared against each other
+                return FalsyEquivalent(arg);
+
+            if (IsFalsyNaN())
+                //Finally, the falsy value NaN is not equivalent to anything — including NaN!
+                return false;
+
+            if (FalsyNull(arg) || FalsyNaN(arg))
+                return false;
+
+            return InternalEquals(arg);
         }
 
 
-        public override int GetHashCode()
+        public sealed override int GetHashCode()
         {
-            return 1;
+            return 1; //Make sure falsies clash.
         }
 
 
-        protected internal abstract bool GetBooleanValue();
-        protected abstract bool InternalEquals(object o);
 
 
 
 
 
+
+
+        public static bool FalsyEquivalent(object arg)
+        {
+            if (ReferenceEquals(null, arg))
+                return false;
+
+            if (Equals(false, arg) || Equals("", arg) )
+                return true;
+
+            dynamic argument = arg;
+            bool isNumeric = NumericInfo.IsNumeric(argument);
+
+            if (!isNumeric) return false;
+
+            var result = (double) Math.Abs(argument) < double.Epsilon;
+            return result;
+        }
+
+        public static bool FalsyNull(object arg)
+        {
+            return ReferenceEquals(null, arg) /*|| Equals(undefined, arg)*/;
+        }
+
+        public static bool FalsyNaN(object arg)
+        {
+            return Equals(float.NaN, arg) || Equals(double.NaN, arg);
+        }
+        
         public static bool operator ==(DynamicFalsy falsy1, DynamicFalsy falsy2)
         {
+            if (ReferenceEquals(null, falsy1))
+                return ReferenceEquals(null, falsy2) || falsy2.Equals(null);
+
+            if (ReferenceEquals(null, falsy2))
+                return falsy1.Equals(null);
+
             return Equals(falsy1, falsy2);
         }
         public static bool operator !=(DynamicFalsy falsy1, DynamicFalsy falsy2)
@@ -104,5 +150,19 @@ namespace Falsy.NET
         {
             return !(ReferenceEquals(null, falsy) ? value : falsy.Equals(value));
         }
+
+
+
+
+
+
+
+
+        public abstract bool IsFalsyEquivalent();
+        public abstract bool IsFalsyNull();
+        public abstract bool IsFalsyNaN();
+        public abstract bool Equals(DynamicFalsy arg);
+        protected internal abstract bool GetBooleanValue();
+        protected abstract bool InternalEquals(object o);
     }
 }
