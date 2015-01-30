@@ -22,10 +22,10 @@ using System.Dynamic;
 using System.Linq.Expressions;
 using Invocation;
 
-namespace Falsy.NET
+namespace Falsy.NET.Internals
 {
     [DebuggerDisplay("Falsy: {_instance} == {GetBooleanValue()}")]
-    public sealed class DynamicFalsy<T> : DynamicFalsy
+    public class DynamicFalsy<T> : DynamicFalsy
     {
         private static readonly Predicate<T> Falsy;
 
@@ -76,13 +76,19 @@ namespace Falsy.NET
 
 
 
-        private readonly T _instance;
-        private readonly Lazy<bool> _isFalse;
-        private readonly Lazy<bool> _isFalsyEquivalent;
-        private readonly Lazy<bool> _isFalsyNull;
-        private readonly Lazy<bool> _isFalsyNaN;
+        protected readonly T _instance;
+        protected readonly Lazy<bool> _isFalse;
+        protected readonly Lazy<bool> _isFalsyEquivalent;
+        protected readonly Lazy<bool> _isFalsyNull;
+        protected readonly Lazy<bool> _isFalsyNaN;
 
-        public DynamicFalsy(T instance)
+
+	    public DynamicFalsy()
+	    {
+		    throw new NotSupportedException("Creating instances of DynamicFalsy is not allowed.");
+	    }
+
+        internal DynamicFalsy(T instance)
         {
             _instance = instance;
             _isFalse = new Lazy<bool>(() => Falsy(_instance));
@@ -95,10 +101,16 @@ namespace Falsy.NET
 
         public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
-            //TODO: Fields?
             object prop;
 
             if (TypeInfo<T>.TryGetProperty(_instance, binder.Name, out prop))
+            {
+                dynamic value = prop;
+                result = NET.Falsy.Falsify(value);
+                return true;
+            }
+
+            if (TypeInfo<T>.TryGetField(_instance, binder.Name, out prop))
             {
                 dynamic value = prop;
                 result = NET.Falsy.Falsify(value);
@@ -111,20 +123,13 @@ namespace Falsy.NET
 
         public override bool TrySetMember(SetMemberBinder binder, object value)
         {
-            //TODO: Fields?
-            return TypeInfo<T>.TrySetProperty(_instance, binder.Name, value);
+            return TypeInfo<T>.TrySetProperty(_instance, binder.Name, value) || TypeInfo<T>.TrySetField(_instance, binder.Name, value);
         }
 
         public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
         {
             //TODO: Falsify result?
             return TypeInfo<T>.TryCall(_instance, binder, args, out  result);
-        }
-
-        public override bool TryInvoke(InvokeBinder binder, object[] args, out object result)
-        {
-            //TODO??
-            return base.TryInvoke(binder, args, out result);
         }
 
         public override bool TryConvert(ConvertBinder binder, out object result)

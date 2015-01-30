@@ -19,7 +19,7 @@
 using System;
 using System.Dynamic;
 
-namespace Falsy.NET
+namespace Falsy.NET.Internals
 {
     public abstract class DynamicFalsy : DynamicObject
     {

@@ -21,18 +21,21 @@ using System.Dynamic;
 using System.Linq.Expressions;
 using Invocation;
 
-namespace Falsy.NET
+namespace Falsy.NET.Internals
 {
-    [DebuggerDisplay("Undefined Falsy")]
+    [DebuggerDisplay("undefined", Name = "Falsy")]
     public sealed class UndefinedFalsy : DynamicFalsy
     {
-        public static readonly dynamic Value = new UndefinedFalsy();
+        internal static readonly dynamic Value = new UndefinedFalsy();
 
-        private UndefinedFalsy()
-        {
-            
-        }
-
+        //Allow only one instance.
+        private UndefinedFalsy() { }
+        
+	    public override string ToString()
+	    {
+		    return "undefined";
+	    }
+	    
         public override bool IsFalsyEquivalent()
         {
             return false;

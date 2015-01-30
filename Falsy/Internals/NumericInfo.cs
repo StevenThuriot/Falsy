@@ -19,7 +19,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Falsy.NET
+namespace Falsy.NET.Internals
 {
     static class NumericInfo
     {

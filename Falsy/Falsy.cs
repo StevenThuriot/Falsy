@@ -16,19 +16,52 @@
 // 
 #endregion
 
+using System.Collections;
+using System.Collections.Generic;
+using Falsy.NET.Internals;
+
 namespace Falsy.NET
 {
     public static class Falsy
     {
+        public static readonly dynamic undefined = UndefinedFalsy.Value;
 
-        public static dynamic Falsify<T>(this T instance)
-        {
-            return new DynamicFalsy<T>(instance);
-        }
+		public static dynamic Falsify(this object instance)
+		{
+            return ReferenceEquals(null, instance)
+				       ? UndefinedFalsy.Value
+					   //Resolve actual type through the DLR
+					   : InternalFalsify((dynamic) instance);
+		}
+        
 
-        public static dynamic Falsify(this DynamicFalsy falsy)
-        {
-            return falsy;
-        }
-    }
+	    public static dynamic Falsify<TKey, TValue>(this IDictionary<TKey, TValue> instance)
+		{
+			return ReferenceEquals(null, instance)
+				       ? UndefinedFalsy.Value
+					   //Resolve actual type through the DLR
+					   : InternalDictionaryFalsify((dynamic) instance);
+
+		}
+
+		internal static dynamic Falsify(this DynamicFalsy instance)
+		{
+			return ReferenceEquals(null, instance)
+				       ? UndefinedFalsy.Value
+				       : instance;
+		}
+
+
+
+
+	    private static dynamic InternalFalsify<T>(T instance)
+		{
+			return new DynamicFalsy<T>(instance);
+		}
+		private static dynamic InternalDictionaryFalsify<T>(T instance) 
+			where T : IDictionary
+		{
+			return new DictionaryFalsy<T>(instance);
+		}
+	}
 }

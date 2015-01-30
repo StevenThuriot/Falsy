@@ -17,9 +17,12 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using Falsy.NET;
+using Falsy.NET.Internals;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Falsy = Falsy.NET.Falsy;
 
 namespace Falsy.Tests
 {
@@ -29,7 +32,7 @@ namespace Falsy.Tests
         [TestMethod]
         public void NullIsFalse()
         {
-            var value = ((object)null).Falsify();
+            var value = NET.Falsy.Falsify(null);
             
             if (value)
             {
@@ -517,7 +520,7 @@ namespace Falsy.Tests
         {
             var value1 = "The Truth".Falsify();
             var value2 = 0.Falsify();
-
+			
             if (value1 || value2)
             {
             }
@@ -619,16 +622,16 @@ namespace Falsy.Tests
         [TestMethod]
         public void NullShouldBeFalseButNotEquivalent()
         {
-            bool f = (NET.Falsy.Falsify<object>(null) == false); // false
+            bool f = (NET.Falsy.Falsify(null) == false); // false
             bool f2 = (null == false.Falsify()); // false
-            bool f3 = (NET.Falsy.Falsify<object>(null) == false.Falsify()); // false
+            bool f3 = (NET.Falsy.Falsify(null) == false.Falsify()); // false
             Assert.IsFalse(f);
             Assert.IsFalse(f2);
             Assert.IsFalse(f3);
 
-            bool g = (null == NET.Falsy.Falsify<object>(null)); // true
-            bool g2 = (NET.Falsy.Falsify<object>(null) == null); // true
-            bool g3 = (NET.Falsy.Falsify<object>(null) == NET.Falsy.Falsify<object>(null)); // true
+            bool g = (null == NET.Falsy.Falsify(null)); // true
+            bool g2 = (NET.Falsy.Falsify(null) == null); // true
+            bool g3 = (NET.Falsy.Falsify(null) == NET.Falsy.Falsify(null)); // true
             Assert.IsTrue(g);//Problem case..
             Assert.IsTrue(g2);//Problem case..
             Assert.IsTrue(g3);
@@ -637,14 +640,14 @@ namespace Falsy.Tests
         [TestMethod]
         public void UndefinedShouldBeFalseButNotEquivalent()
         {
-            bool h = (UndefinedFalsy.Value == false.Falsify()); // false
-            bool h2 = (UndefinedFalsy.Value == false); // false
+            bool h = (NET.Falsy.undefined == false.Falsify()); // false
+            bool h2 = (NET.Falsy.undefined == false); // false
             Assert.IsFalse(h);
             Assert.IsFalse(h2);
 
-            bool i = (UndefinedFalsy.Value == null); // true
-            bool i2 = (UndefinedFalsy.Value == NET.Falsy.Falsify<object>(null)); // true
-            bool i3 = (NET.Falsy.Falsify<object>(null) == UndefinedFalsy.Value); // true
+            bool i = (NET.Falsy.undefined == null); // true
+            bool i2 = (NET.Falsy.undefined == NET.Falsy.Falsify(null)); // true
+            bool i3 = (NET.Falsy.Falsify(null) == NET.Falsy.undefined); // true
             Assert.IsTrue(i);
             Assert.IsTrue(i2);
             Assert.IsTrue(i3);
@@ -654,8 +657,8 @@ namespace Falsy.Tests
         public void NaNShouldBeAWeirdo()
         {
             bool j = (Single.NaN.Falsify() == null); // false
-            bool j2 = (Single.NaN == NET.Falsy.Falsify<object>(null)); // false
-            bool j3 = (Single.NaN.Falsify() == NET.Falsy.Falsify<object>(null)); // false
+            bool j2 = (Single.NaN == NET.Falsy.Falsify(null)); // false
+            bool j3 = (Single.NaN.Falsify() == NET.Falsy.Falsify(null)); // false
             Assert.IsFalse(j);
             Assert.IsFalse(j2);
             Assert.IsFalse(j3);
@@ -668,8 +671,8 @@ namespace Falsy.Tests
             Assert.IsFalse(k3);
 
             bool l = (double.NaN.Falsify() == null); // false
-            bool l2 = (double.NaN == NET.Falsy.Falsify<object>(null)); // false
-            bool l3 = (double.NaN.Falsify() == NET.Falsy.Falsify<object>(null)); // false
+            bool l2 = (double.NaN == NET.Falsy.Falsify(null)); // false
+            bool l3 = (double.NaN.Falsify() == NET.Falsy.Falsify(null)); // false
             Assert.IsFalse(l);
             Assert.IsFalse(l2);
             Assert.IsFalse(l3);
@@ -686,7 +689,7 @@ namespace Falsy.Tests
         [TestMethod]
         public void UndefinedShouldBeFalsy()
         {
-            if (UndefinedFalsy.Value)
+            if (NET.Falsy.undefined)
             {
                 Assert.Fail("Undefined Should Be Falsy");
             }
@@ -707,7 +710,7 @@ namespace Falsy.Tests
 
             var undefined = falsy.Test;
 
-            Assert.AreEqual(undefined, UndefinedFalsy.Value, "Undefined Properties Should Return Undefined");
+            Assert.AreEqual(NET.Falsy.undefined, undefined, "Undefined Properties Should Return Undefined");
         }
 
         [TestMethod, ExpectedException(typeof(RuntimeBinderException))]
@@ -719,5 +722,110 @@ namespace Falsy.Tests
 
             Assert.Fail("Should have crashed.");
         }
+
+
+		[TestMethod]
+	    public void DictionaryEntriesShouldBeAccessibleAsProperties()
+		{
+			var dictionary = new Dictionary<string, int>
+			                 {
+				                 {"Test", 5}
+			                 };
+
+			var falsy = dictionary.Falsify();
+
+			int result = falsy.Test;
+			Assert.AreEqual(5, result, "Dictionary Entries Should Be Accessible As Properties");
+		}
+
+		[TestMethod]
+	    public void DictionaryPropertiesShouldBeAccessible()
+		{
+			var dictionary = new Dictionary<string, int>
+			                 {
+				                 {"Test", 5}
+			                 };
+
+			var falsy = dictionary.Falsify();
+
+			int result = falsy.Count;
+			Assert.AreEqual(1, result, "Dictionary Properties Should Be Accessible");
+		}
+
+		[TestMethod]
+	    public void DictionaryEntriesShouldHavePriorityOverNormalProperties()
+		{
+			var dictionary = new Dictionary<string, int>
+			                 {
+				                 {"Count", 5}
+			                 };
+
+		    var falsy = dictionary.Falsify();
+
+			int result = falsy.Count;
+			Assert.AreEqual(5, result, "Dictionary Entries Should Have Priority Over Normal Properties");
+		}
+
+		[TestMethod]
+	    public void DictionaryShouldHaveCallableMethods()
+		{
+			var dictionary = new Dictionary<string, int>
+			                 {
+				                 {"Count", 5}
+			                 };
+
+		    var falsy = dictionary.Falsify();
+            falsy.Clear();
+            Assert.AreEqual(0, dictionary.Count, "Dictionary Should Have Callable Methods");
+		}
+
+		[TestMethod]
+	    public void DictionaryShouldGetIndexes()
+		{
+			var dictionary = new Dictionary<string, int>
+			                 {
+				                 {"Test", 5}
+			                 };
+
+		    var falsy = dictionary.Falsify();
+            int count = falsy["Test"];
+            
+            Assert.AreEqual(5, count, "Dictionary Should Get Indexes");
+		}
+
+		[TestMethod]
+	    public void DictionaryShouldSetIndexes()
+		{
+			var dictionary = new Dictionary<string, int>();
+
+		    var falsy = dictionary.Falsify();
+
+		    falsy["Test"] = 5;
+
+            int count = falsy["Test"];
+            int count2 = falsy.Test;
+            
+            Assert.AreEqual(5, count, "Dictionary Should Set Indexes");
+            Assert.AreEqual(5, count2, "Dictionary Should Set Indexes");
+		}
+
+		[TestMethod]
+	    public void DictionaryShouldSetMembers()
+		{
+			var dictionary = new Dictionary<object, object>();
+
+		    var falsy = dictionary.Falsify();
+
+		    falsy.Test = 5;
+		    falsy.Test2 = "10";
+
+            int count = falsy["Test"];
+            int count2 = falsy.Test;
+		    string count3 = falsy.Test2;
+            
+            Assert.AreEqual(5, count, "Dictionary Should Set Indexes");
+            Assert.AreEqual(5, count2, "Dictionary Should Set Indexes");
+            Assert.AreEqual("10", count3, "Dictionary Should Set Indexes");
+		}
     }
 }
