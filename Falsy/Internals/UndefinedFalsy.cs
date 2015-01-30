@@ -1,4 +1,5 @@
 #region License
+
 //  
 // Copyright 2015 Steven Thuriot
 //  
@@ -14,6 +15,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 #endregion
 
 using System.Diagnostics;
@@ -29,13 +31,15 @@ namespace Falsy.NET.Internals
         internal static readonly dynamic Value = new UndefinedFalsy();
 
         //Allow only one instance.
-        private UndefinedFalsy() { }
-        
-	    public override string ToString()
-	    {
-		    return "undefined";
-	    }
-	    
+        private UndefinedFalsy()
+        {
+        }
+
+        public override string ToString()
+        {
+            return "undefined";
+        }
+
         public override bool IsFalsyEquivalent()
         {
             return false;
@@ -61,16 +65,11 @@ namespace Falsy.NET.Internals
         {
             return ReferenceEquals(null, arg) || arg.IsFalsyNull();
         }
-        
+
         protected override bool InternalEquals(object o)
         {
             return ReferenceEquals(null, o);
         }
-
-
-
-
-
 
 
         public override bool TryConvert(ConvertBinder binder, out object result)
@@ -93,7 +92,6 @@ namespace Falsy.NET.Internals
                     return true;
 
 
-
                 case ExpressionType.IsTrue:
                     result = false;
                     return true;
@@ -112,14 +110,10 @@ namespace Falsy.NET.Internals
                     return true;
 
 
-
-
-
                 case ExpressionType.And:
                 case ExpressionType.AndAlso:
                     result = false;
                     return true;
-
 
 
                 case ExpressionType.Or:

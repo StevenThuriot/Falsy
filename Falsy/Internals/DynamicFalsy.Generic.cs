@@ -1,4 +1,5 @@
 #region License
+
 //  
 // Copyright 2015 Steven Thuriot
 //  
@@ -14,6 +15,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 #endregion
 
 using System;
@@ -29,6 +31,13 @@ namespace Falsy.NET.Internals
     {
         private static readonly Predicate<T> Falsy;
 
+
+        protected readonly T _instance;
+        protected readonly Lazy<bool> _isFalse;
+        protected readonly Lazy<bool> _isFalsyEquivalent;
+        protected readonly Lazy<bool> _isFalsyNaN;
+        protected readonly Lazy<bool> _isFalsyNull;
+
         static DynamicFalsy()
         {
             Predicate<T> nullCheck = obj => ReferenceEquals(null, obj);
@@ -40,22 +49,22 @@ namespace Falsy.NET.Internals
             else if (Constants.Typed<T>.OwnerType == Constants.DoubleType)
             {
                 Falsy = obj =>
-                {
-                    if (nullCheck(obj)) return true;
+                        {
+                            if (nullCheck(obj)) return true;
 
-                    var value = (double) (object) obj;
-                    return Double.IsNaN(value) || Math.Abs(value) < Double.Epsilon;
-                };
+                            var value = (double) (object) obj;
+                            return Double.IsNaN(value) || Math.Abs(value) < Double.Epsilon;
+                        };
             }
             else if (Constants.Typed<T>.OwnerType == Constants.FloatType)
             {
                 Falsy = obj =>
-                {
-                    if (nullCheck(obj)) return true;
+                        {
+                            if (nullCheck(obj)) return true;
 
-                    var value = (float) (object) obj;
-                    return Single.IsNaN(value) || Math.Abs(value) < Single.Epsilon;
-                };
+                            var value = (float) (object) obj;
+                            return Single.IsNaN(value) || Math.Abs(value) < Single.Epsilon;
+                        };
             }
             else if (Constants.Typed<T>.OwnerType.IsNumeric())
             {
@@ -72,27 +81,16 @@ namespace Falsy.NET.Internals
         }
 
 
-
-
-
-
-        protected readonly T _instance;
-        protected readonly Lazy<bool> _isFalse;
-        protected readonly Lazy<bool> _isFalsyEquivalent;
-        protected readonly Lazy<bool> _isFalsyNull;
-        protected readonly Lazy<bool> _isFalsyNaN;
-
-
-	    public DynamicFalsy()
-	    {
-		    throw new NotSupportedException("Creating instances of DynamicFalsy is not allowed.");
-	    }
+        public DynamicFalsy()
+        {
+            throw new NotSupportedException("Creating instances of DynamicFalsy is not allowed.");
+        }
 
         internal DynamicFalsy(T instance)
         {
             _instance = instance;
             _isFalse = new Lazy<bool>(() => Falsy(_instance));
-            
+
             _isFalsyNaN = new Lazy<bool>(() => FalsyNaN(_instance));
             _isFalsyNull = new Lazy<bool>(() => FalsyNull(_instance));
             _isFalsyEquivalent = new Lazy<bool>(() => FalsyEquivalent(_instance));
@@ -123,13 +121,14 @@ namespace Falsy.NET.Internals
 
         public override bool TrySetMember(SetMemberBinder binder, object value)
         {
-            return TypeInfo<T>.TrySetProperty(_instance, binder.Name, value) || TypeInfo<T>.TrySetField(_instance, binder.Name, value);
+            return TypeInfo<T>.TrySetProperty(_instance, binder.Name, value) ||
+                   TypeInfo<T>.TrySetField(_instance, binder.Name, value);
         }
 
         public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
         {
             //TODO: Falsify result?
-            return TypeInfo<T>.TryCall(_instance, binder, args, out  result);
+            return TypeInfo<T>.TryCall(_instance, binder, args, out result);
         }
 
         public override bool TryConvert(ConvertBinder binder, out object result)
@@ -158,7 +157,6 @@ namespace Falsy.NET.Internals
                     return true;
 
 
-
                 case ExpressionType.IsTrue:
                     result = !_isFalse.Value;
                     return true;
@@ -177,14 +175,10 @@ namespace Falsy.NET.Internals
                     return true;
 
 
-
-
-
                 case ExpressionType.And:
                 case ExpressionType.AndAlso:
                     result = !_isFalse.Value && Equals(arg);
                     return true;
-
 
 
                 case ExpressionType.Or:
@@ -289,8 +283,8 @@ namespace Falsy.NET.Internals
 
             if (_isFalse.Value == arg.GetBooleanValue())
                 //Different boolean values, thus can't be equal.
-                return false; 
-            
+                return false;
+
             return !arg.IsFalsyNull() && !arg.IsFalsyNaN();
         }
 

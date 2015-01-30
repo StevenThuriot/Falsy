@@ -1,4 +1,5 @@
 ﻿#region License
+
 //  
 // Copyright 2015 Steven Thuriot
 //  
@@ -14,6 +15,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 #endregion
 
 using System.Collections;
@@ -26,42 +28,40 @@ namespace Falsy.NET
     {
         public static readonly dynamic undefined = UndefinedFalsy.Value;
 
-		public static dynamic Falsify(this object instance)
-		{
+        public static dynamic Falsify(this object instance)
+        {
             return ReferenceEquals(null, instance)
-				       ? UndefinedFalsy.Value
-					   //Resolve actual type through the DLR
-					   : InternalFalsify((dynamic) instance);
-		}
-        
-
-	    public static dynamic Falsify<TKey, TValue>(this IDictionary<TKey, TValue> instance)
-		{
-			return ReferenceEquals(null, instance)
-				       ? UndefinedFalsy.Value
-					   //Resolve actual type through the DLR
-					   : InternalDictionaryFalsify((dynamic) instance);
-
-		}
-
-		internal static dynamic Falsify(this DynamicFalsy instance)
-		{
-			return ReferenceEquals(null, instance)
-				       ? UndefinedFalsy.Value
-				       : instance;
-		}
+                ? UndefinedFalsy.Value
+                //Resolve actual type through the DLR
+                : InternalFalsify((dynamic) instance);
+        }
 
 
+        public static dynamic Falsify<TKey, TValue>(this IDictionary<TKey, TValue> instance)
+        {
+            return ReferenceEquals(null, instance)
+                ? UndefinedFalsy.Value
+                //Resolve actual type through the DLR
+                : InternalDictionaryFalsify((dynamic) instance);
+        }
+
+        internal static dynamic Falsify(this DynamicFalsy instance)
+        {
+            return ReferenceEquals(null, instance)
+                ? UndefinedFalsy.Value
+                : instance;
+        }
 
 
-	    private static dynamic InternalFalsify<T>(T instance)
-		{
-			return new DynamicFalsy<T>(instance);
-		}
-		private static dynamic InternalDictionaryFalsify<T>(T instance) 
-			where T : IDictionary
-		{
-			return new DictionaryFalsy<T>(instance);
-		}
-	}
+        private static dynamic InternalFalsify<T>(T instance)
+        {
+            return new DynamicFalsy<T>(instance);
+        }
+
+        private static dynamic InternalDictionaryFalsify<T>(T instance)
+            where T : IDictionary
+        {
+            return new DictionaryFalsy<T>(instance);
+        }
+    }
 }

@@ -1,4 +1,5 @@
 #region License
+
 //  
 // Copyright 2015 Steven Thuriot
 //  
@@ -14,6 +15,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 #endregion
 
 using System;
@@ -23,36 +25,37 @@ namespace Falsy.NET.Internals
 {
     static class NumericInfo
     {
-        static readonly HashSet<Type> NumericTypes = new HashSet<Type>
-        {
-            typeof (Byte),
-            typeof (SByte),
-            typeof (UInt16),
-            typeof (UInt32),
-            typeof (UInt64),
-            typeof (Int16),
-            typeof (Int32),
-            typeof (Int64),
-            typeof (Decimal),
-            typeof (Double),
-            typeof (Single),
-            //typeof (BigInteger),
-            //typeof (Complex),
-        };
+        private static readonly HashSet<Type> NumericTypes = new HashSet<Type>
+                                                             {
+                                                                 typeof (Byte),
+                                                                 typeof (SByte),
+                                                                 typeof (UInt16),
+                                                                 typeof (UInt32),
+                                                                 typeof (UInt64),
+                                                                 typeof (Int16),
+                                                                 typeof (Int32),
+                                                                 typeof (Int64),
+                                                                 typeof (Decimal),
+                                                                 typeof (Double),
+                                                                 typeof (Single),
+                                                                 //typeof (BigInteger),
+                                                                 //typeof (Complex),
+                                                             };
 
         public static bool IsNumeric<T>(T instance)
         {
             return Typed<T>.TypeIsNumeric;
         }
+
         public static bool IsNumeric(this Type type)
         {
             return NumericTypes.Contains(type);
         }
 
 
-        static class Typed<T>
+        private static class Typed<T>
         {
-            public static readonly bool TypeIsNumeric = NumericTypes.Contains(typeof(T));
+            public static readonly bool TypeIsNumeric = NumericTypes.Contains(typeof (T));
         }
     }
 }

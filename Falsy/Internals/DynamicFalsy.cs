@@ -1,4 +1,5 @@
 #region License
+
 //  
 // Copyright 2015 Steven Thuriot
 //  
@@ -14,6 +15,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 #endregion
 
 using System;
@@ -29,18 +31,18 @@ namespace Falsy.NET.Internals
             return other ? !isFalsyEquivalent : isFalsyEquivalent;
         }
 
-        public sealed override bool Equals(object arg)
+        public override sealed bool Equals(object arg)
         {
             if (ReferenceEquals(null, arg))
                 return IsFalsyNull();
 
             if (arg is bool)
-                return Equals((bool)arg);
+                return Equals((bool) arg);
 
             var falsy = arg as DynamicFalsy;
             if (!ReferenceEquals(null, falsy))
                 return Equals(falsy);
-            
+
             if (IsFalsyNull())
                 //The falsy values null and undefined are not equivalent to anything except themselves
                 return FalsyNull(arg);
@@ -60,17 +62,10 @@ namespace Falsy.NET.Internals
         }
 
 
-        public sealed override int GetHashCode()
+        public override sealed int GetHashCode()
         {
             return 1; //Make sure falsies clash.
         }
-
-
-
-
-
-
-
 
 
         public static bool FalsyEquivalent(object arg)
@@ -78,7 +73,7 @@ namespace Falsy.NET.Internals
             if (ReferenceEquals(null, arg))
                 return false;
 
-            if (Equals(false, arg) || Equals("", arg) )
+            if (Equals(false, arg) || Equals("", arg))
                 return true;
 
             dynamic argument = arg;
@@ -99,7 +94,7 @@ namespace Falsy.NET.Internals
         {
             return Equals(float.NaN, arg) || Equals(double.NaN, arg);
         }
-        
+
         public static bool operator ==(DynamicFalsy falsy1, DynamicFalsy falsy2)
         {
             if (ReferenceEquals(null, falsy1))
@@ -110,6 +105,7 @@ namespace Falsy.NET.Internals
 
             return Equals(falsy1, falsy2);
         }
+
         public static bool operator !=(DynamicFalsy falsy1, DynamicFalsy falsy2)
         {
             return !(falsy1 == falsy2);
@@ -119,6 +115,7 @@ namespace Falsy.NET.Internals
         {
             return Equals(falsy, value);
         }
+
         public static bool operator !=(object value, DynamicFalsy falsy)
         {
             return !Equals(falsy, value);
@@ -128,6 +125,7 @@ namespace Falsy.NET.Internals
         {
             return Equals(falsy, value);
         }
+
         public static bool operator !=(DynamicFalsy falsy, object value)
         {
             return !Equals(falsy, value);
@@ -137,6 +135,7 @@ namespace Falsy.NET.Internals
         {
             return ReferenceEquals(null, falsy) ? value : falsy.Equals(value);
         }
+
         public static bool operator !=(bool value, DynamicFalsy falsy)
         {
             return !(ReferenceEquals(null, falsy) ? value : falsy.Equals(value));
@@ -146,16 +145,11 @@ namespace Falsy.NET.Internals
         {
             return ReferenceEquals(null, falsy) ? value : falsy.Equals(value);
         }
+
         public static bool operator !=(DynamicFalsy falsy, bool value)
         {
             return !(ReferenceEquals(null, falsy) ? value : falsy.Equals(value));
         }
-
-
-
-
-
-
 
 
         public abstract bool IsFalsyEquivalent();

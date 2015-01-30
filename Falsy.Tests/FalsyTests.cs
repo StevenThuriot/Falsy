@@ -1,4 +1,5 @@
 ﻿#region License
+
 //  
 // Copyright 2015 Steven Thuriot
 //  
@@ -14,15 +15,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 #endregion
 
 using System;
 using System.Collections.Generic;
 using Falsy.NET;
-using Falsy.NET.Internals;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Falsy = Falsy.NET.Falsy;
 
 namespace Falsy.Tests
 {
@@ -33,12 +33,12 @@ namespace Falsy.Tests
         public void NullIsFalse()
         {
             var value = NET.Falsy.Falsify(null);
-            
+
             if (value)
             {
                 Assert.Fail("Null should be false.");
             }
-            
+
             if (!value)
             {
             }
@@ -55,7 +55,6 @@ namespace Falsy.Tests
 
             if (value)
             {
-                
             }
             else
             {
@@ -66,12 +65,12 @@ namespace Falsy.Tests
             {
                 Assert.Fail("Not null should be true.");
             }
-            
+
             if (value == false)
             {
                 Assert.Fail("Not null should be true.");
             }
-            
+
             if (value != true)
             {
                 Assert.Fail("Not null should be true.");
@@ -96,7 +95,6 @@ namespace Falsy.Tests
 
             if (Equals(value1, value2))
             {
-
             }
             else
             {
@@ -105,7 +103,6 @@ namespace Falsy.Tests
 
             if (value1 == value2)
             {
-
             }
             else
             {
@@ -119,7 +116,6 @@ namespace Falsy.Tests
 
             if (Equals(value2, value1))
             {
-
             }
             else
             {
@@ -128,7 +124,6 @@ namespace Falsy.Tests
 
             if (value2 == value1)
             {
-
             }
             else
             {
@@ -150,7 +145,6 @@ namespace Falsy.Tests
 
             if (Equals(value1, value2))
             {
-
             }
             else
             {
@@ -159,7 +153,6 @@ namespace Falsy.Tests
 
             if (value1 == value2)
             {
-
             }
             else
             {
@@ -173,7 +166,6 @@ namespace Falsy.Tests
 
             if (Equals(value2, value1))
             {
-
             }
             else
             {
@@ -182,7 +174,6 @@ namespace Falsy.Tests
 
             if (value2 == value1)
             {
-
             }
             else
             {
@@ -204,7 +195,6 @@ namespace Falsy.Tests
 
             if (!Equals(value1, value2))
             {
-
             }
             else
             {
@@ -213,7 +203,6 @@ namespace Falsy.Tests
 
             if (value1 != value2)
             {
-
             }
             else
             {
@@ -227,7 +216,6 @@ namespace Falsy.Tests
 
             if (!Equals(value2, value1))
             {
-
             }
             else
             {
@@ -236,7 +224,6 @@ namespace Falsy.Tests
 
             if (value2 != value1)
             {
-
             }
             else
             {
@@ -258,7 +245,6 @@ namespace Falsy.Tests
 
             if (value1 && value2)
             {
-                
             }
             else
             {
@@ -272,7 +258,6 @@ namespace Falsy.Tests
 
             if (value2 && value1)
             {
-                
             }
             else
             {
@@ -286,7 +271,6 @@ namespace Falsy.Tests
 
             if (value1 && value1)
             {
-
             }
             else
             {
@@ -313,7 +297,6 @@ namespace Falsy.Tests
 
             if (!(value1 && value2))
             {
-
             }
             else
             {
@@ -327,7 +310,6 @@ namespace Falsy.Tests
 
             if (!(value2 && value1))
             {
-
             }
             else
             {
@@ -350,7 +332,7 @@ namespace Falsy.Tests
             {
                 Assert.Fail("Instance Should Equal Its Original Value");
             }
-            
+
             var value3 = 5;
             var value4 = value3.Falsify();
 
@@ -362,7 +344,7 @@ namespace Falsy.Tests
             {
                 Assert.Fail("Instance Should Equal Its Original Value");
             }
-            
+
             var value5 = 0;
             var value6 = value5.Falsify();
 
@@ -387,7 +369,7 @@ namespace Falsy.Tests
 
             string unbox = falsy;
             Assert.AreSame(value, unbox);
-            Assert.AreSame(value, (string)falsy);
+            Assert.AreSame(value, (string) falsy);
 
             //Note: This doesn't work with object since TryConvert will not be called as object is a base class for DynamicObject, but is there anyone using it that way ?!
             //var value = new object();
@@ -409,14 +391,6 @@ namespace Falsy.Tests
         }
 
 
-
-
-
-
-
-
-
-
         [TestMethod]
         public void TruthOrTruthEqualsTruth()
         {
@@ -425,7 +399,6 @@ namespace Falsy.Tests
 
             if (value1 || value2)
             {
-
             }
             else
             {
@@ -439,7 +412,6 @@ namespace Falsy.Tests
 
             if (value2 || value1)
             {
-
             }
             else
             {
@@ -453,7 +425,6 @@ namespace Falsy.Tests
 
             if (value1 || value1)
             {
-
             }
             else
             {
@@ -479,7 +450,6 @@ namespace Falsy.Tests
 
             if (!(value1 || value2))
             {
-
             }
             else
             {
@@ -493,7 +463,6 @@ namespace Falsy.Tests
 
             if (!(value2 || value1))
             {
-
             }
             else
             {
@@ -507,7 +476,6 @@ namespace Falsy.Tests
 
             if (!(value1 || value1))
             {
-
             }
             else
             {
@@ -520,7 +488,7 @@ namespace Falsy.Tests
         {
             var value1 = "The Truth".Falsify();
             var value2 = 0.Falsify();
-			
+
             if (value1 || value2)
             {
             }
@@ -536,7 +504,6 @@ namespace Falsy.Tests
 
             if (value2 || value1)
             {
-
             }
             else
             {
@@ -548,10 +515,6 @@ namespace Falsy.Tests
                 Assert.Fail("Falsy Or Truth Should Equal Truth");
             }
         }
-
-
-
-
 
 
         [TestMethod]
@@ -632,8 +595,8 @@ namespace Falsy.Tests
             bool g = (null == NET.Falsy.Falsify(null)); // true
             bool g2 = (NET.Falsy.Falsify(null) == null); // true
             bool g3 = (NET.Falsy.Falsify(null) == NET.Falsy.Falsify(null)); // true
-            Assert.IsTrue(g);//Problem case..
-            Assert.IsTrue(g2);//Problem case..
+            Assert.IsTrue(g); //Problem case..
+            Assert.IsTrue(g2); //Problem case..
             Assert.IsTrue(g3);
         }
 
@@ -713,7 +676,7 @@ namespace Falsy.Tests
             Assert.AreEqual(NET.Falsy.undefined, undefined, "Undefined Properties Should Return Undefined");
         }
 
-        [TestMethod, ExpectedException(typeof(RuntimeBinderException))]
+        [TestMethod, ExpectedException(typeof (RuntimeBinderException))]
         public void UndefinedPropertiesOfUndefinedPropertiesShouldCrash()
         {
             var falsy = new object().Falsify();
@@ -724,108 +687,108 @@ namespace Falsy.Tests
         }
 
 
-		[TestMethod]
-	    public void DictionaryEntriesShouldBeAccessibleAsProperties()
-		{
-			var dictionary = new Dictionary<string, int>
-			                 {
-				                 {"Test", 5}
-			                 };
+        [TestMethod]
+        public void DictionaryEntriesShouldBeAccessibleAsProperties()
+        {
+            var dictionary = new Dictionary<string, int>
+                             {
+                                 {"Test", 5}
+                             };
 
-			var falsy = dictionary.Falsify();
+            var falsy = dictionary.Falsify();
 
-			int result = falsy.Test;
-			Assert.AreEqual(5, result, "Dictionary Entries Should Be Accessible As Properties");
-		}
+            int result = falsy.Test;
+            Assert.AreEqual(5, result, "Dictionary Entries Should Be Accessible As Properties");
+        }
 
-		[TestMethod]
-	    public void DictionaryPropertiesShouldBeAccessible()
-		{
-			var dictionary = new Dictionary<string, int>
-			                 {
-				                 {"Test", 5}
-			                 };
+        [TestMethod]
+        public void DictionaryPropertiesShouldBeAccessible()
+        {
+            var dictionary = new Dictionary<string, int>
+                             {
+                                 {"Test", 5}
+                             };
 
-			var falsy = dictionary.Falsify();
+            var falsy = dictionary.Falsify();
 
-			int result = falsy.Count;
-			Assert.AreEqual(1, result, "Dictionary Properties Should Be Accessible");
-		}
+            int result = falsy.Count;
+            Assert.AreEqual(1, result, "Dictionary Properties Should Be Accessible");
+        }
 
-		[TestMethod]
-	    public void DictionaryEntriesShouldHavePriorityOverNormalProperties()
-		{
-			var dictionary = new Dictionary<string, int>
-			                 {
-				                 {"Count", 5}
-			                 };
+        [TestMethod]
+        public void DictionaryEntriesShouldHavePriorityOverNormalProperties()
+        {
+            var dictionary = new Dictionary<string, int>
+                             {
+                                 {"Count", 5}
+                             };
 
-		    var falsy = dictionary.Falsify();
+            var falsy = dictionary.Falsify();
 
-			int result = falsy.Count;
-			Assert.AreEqual(5, result, "Dictionary Entries Should Have Priority Over Normal Properties");
-		}
+            int result = falsy.Count;
+            Assert.AreEqual(5, result, "Dictionary Entries Should Have Priority Over Normal Properties");
+        }
 
-		[TestMethod]
-	    public void DictionaryShouldHaveCallableMethods()
-		{
-			var dictionary = new Dictionary<string, int>
-			                 {
-				                 {"Count", 5}
-			                 };
+        [TestMethod]
+        public void DictionaryShouldHaveCallableMethods()
+        {
+            var dictionary = new Dictionary<string, int>
+                             {
+                                 {"Count", 5}
+                             };
 
-		    var falsy = dictionary.Falsify();
+            var falsy = dictionary.Falsify();
             falsy.Clear();
             Assert.AreEqual(0, dictionary.Count, "Dictionary Should Have Callable Methods");
-		}
+        }
 
-		[TestMethod]
-	    public void DictionaryShouldGetIndexes()
-		{
-			var dictionary = new Dictionary<string, int>
-			                 {
-				                 {"Test", 5}
-			                 };
+        [TestMethod]
+        public void DictionaryShouldGetIndexes()
+        {
+            var dictionary = new Dictionary<string, int>
+                             {
+                                 {"Test", 5}
+                             };
 
-		    var falsy = dictionary.Falsify();
+            var falsy = dictionary.Falsify();
             int count = falsy["Test"];
-            
+
             Assert.AreEqual(5, count, "Dictionary Should Get Indexes");
-		}
+        }
 
-		[TestMethod]
-	    public void DictionaryShouldSetIndexes()
-		{
-			var dictionary = new Dictionary<string, int>();
+        [TestMethod]
+        public void DictionaryShouldSetIndexes()
+        {
+            var dictionary = new Dictionary<string, int>();
 
-		    var falsy = dictionary.Falsify();
+            var falsy = dictionary.Falsify();
 
-		    falsy["Test"] = 5;
+            falsy["Test"] = 5;
 
             int count = falsy["Test"];
             int count2 = falsy.Test;
-            
+
             Assert.AreEqual(5, count, "Dictionary Should Set Indexes");
             Assert.AreEqual(5, count2, "Dictionary Should Set Indexes");
-		}
+        }
 
-		[TestMethod]
-	    public void DictionaryShouldSetMembers()
-		{
-			var dictionary = new Dictionary<object, object>();
+        [TestMethod]
+        public void DictionaryShouldSetMembers()
+        {
+            var dictionary = new Dictionary<object, object>();
 
-		    var falsy = dictionary.Falsify();
+            var falsy = dictionary.Falsify();
 
-		    falsy.Test = 5;
-		    falsy.Test2 = "10";
+            falsy.Test = 5;
+            falsy.Test2 = "10";
 
             int count = falsy["Test"];
             int count2 = falsy.Test;
-		    string count3 = falsy.Test2;
-            
+            string count3 = falsy.Test2;
+
             Assert.AreEqual(5, count, "Dictionary Should Set Indexes");
             Assert.AreEqual(5, count2, "Dictionary Should Set Indexes");
             Assert.AreEqual("10", count3, "Dictionary Should Set Indexes");
-		}
+        }
     }
 }
