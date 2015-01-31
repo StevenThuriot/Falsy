@@ -21,6 +21,7 @@
 using System.Collections;
 using System.Diagnostics;
 using System.Dynamic;
+using Invocation;
 
 namespace Falsy.NET.Internals
 {
@@ -53,23 +54,12 @@ namespace Falsy.NET.Internals
 
         public override bool TryGetIndex(GetIndexBinder binder, object[] indexes, out object result)
         {
-            if (indexes.Length != 1)
-            {
-                result = null;
-                return false;
-            }
-
-            result = _instance[indexes[0]];
-            return true;
+            return TypeInfo<T>.TryGetIndexer(_instance, indexes, out result);
         }
 
         public override bool TrySetIndex(SetIndexBinder binder, object[] indexes, object value)
         {
-            if (indexes.Length != 1)
-                return false;
-
-            _instance[indexes[0]] = value;
-            return true;
+            return TypeInfo<T>.TrySetIndexer(_instance, indexes, value);
         }
     }
 }
