@@ -23,6 +23,7 @@ using System.Dynamic;
 
 namespace Falsy.NET.Internals
 {
+
     public abstract class DynamicFalsy : DynamicObject
     {
         protected bool Equals(bool other)
@@ -157,6 +158,7 @@ namespace Falsy.NET.Internals
         public abstract bool IsFalsyNaN();
         public abstract bool Equals(DynamicFalsy arg);
         protected internal abstract bool GetBooleanValue();
+        protected internal abstract dynamic GetValue();
         protected abstract bool InternalEquals(object o);
     }
 }

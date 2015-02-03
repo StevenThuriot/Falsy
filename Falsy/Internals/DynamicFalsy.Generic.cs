@@ -19,6 +19,7 @@
 #endregion
 
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Dynamic;
 using System.Linq.Expressions;
@@ -27,8 +28,11 @@ using Invocation;
 namespace Falsy.NET.Internals
 {
     [DebuggerDisplay("Falsy: {_instance} == {GetBooleanValue()}")]
-    public class DynamicFalsy<T> : DynamicFalsy
+    [TypeConverter(typeof(FalsyTypeConverter))]
+	public class DynamicFalsy<T> : DynamicFalsy
     {
+
+
         private static readonly Predicate<T> Falsy;
 
 
@@ -37,6 +41,11 @@ namespace Falsy.NET.Internals
         protected readonly Lazy<bool> _isFalsyEquivalent;
         protected readonly Lazy<bool> _isFalsyNaN;
         protected readonly Lazy<bool> _isFalsyNull;
+
+	    public static Type UnderlyingType 
+	    {
+		    get { return Constants.Typed<T>.OwnerType; }
+	    }
 
         static DynamicFalsy()
         {
@@ -103,6 +112,12 @@ namespace Falsy.NET.Internals
 
             if (TypeInfo<T>.TryGetProperty(_instance, binder.Name, out prop))
             {
+                if (ReferenceEquals(null, prop))
+                {
+                    result = UndefinedFalsy.Value;
+                    return true;
+                }
+
                 dynamic value = prop;
                 result = NET.Falsy.Falsify(value);
                 return true;
@@ -110,6 +125,12 @@ namespace Falsy.NET.Internals
 
             if (TypeInfo<T>.TryGetField(_instance, binder.Name, out prop))
             {
+                if (ReferenceEquals(null, prop))
+                {
+                    result = UndefinedFalsy.Value;
+                    return true;
+                }
+
                 dynamic value = prop;
                 result = NET.Falsy.Falsify(value);
                 return true;
@@ -127,8 +148,22 @@ namespace Falsy.NET.Internals
 
         public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
         {
-            //TODO: Falsify result?
-            return TypeInfo<T>.TryCall(_instance, binder, args, out result);
+            object output;
+            if (TypeInfo<T>.TryCall(_instance, binder, args, out output))
+            {
+                if (ReferenceEquals(null, output))
+                {
+                    result = UndefinedFalsy.Value;
+                    return true;
+                }
+
+                dynamic value = output;
+                result = NET.Falsy.Falsify(value);
+                return true;
+            }
+
+            result = UndefinedFalsy.Value;
+            return false;
         }
 
         public override bool TryConvert(ConvertBinder binder, out object result)
@@ -248,7 +283,12 @@ namespace Falsy.NET.Internals
             return !_isFalse.Value;
         }
 
-        public override bool IsFalsyEquivalent()
+		protected internal override dynamic GetValue()
+		{
+			return _instance;
+		}
+
+		public override bool IsFalsyEquivalent()
         {
             return _isFalsyEquivalent.Value;
         }

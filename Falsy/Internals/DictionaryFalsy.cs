@@ -38,7 +38,15 @@ namespace Falsy.NET.Internals
         {
             if (_instance.Contains(binder.Name))
             {
-                dynamic dynamicValue = _instance[binder.Name];
+                var value = _instance[binder.Name];
+
+                if (ReferenceEquals(null, value))
+                {
+                    result = UndefinedFalsy.Value;
+                    return true;
+                }
+
+                dynamic dynamicValue = value;
                 result = Falsy.Falsify(dynamicValue);
                 return true;
             }
@@ -54,7 +62,22 @@ namespace Falsy.NET.Internals
 
         public override bool TryGetIndex(GetIndexBinder binder, object[] indexes, out object result)
         {
-            return TypeInfo<T>.TryGetIndexer(_instance, indexes, out result);
+            object output;
+            if (TypeInfo<T>.TryGetIndexer(_instance, indexes, out output))
+            {
+                if (ReferenceEquals(null, output))
+                {
+                    result = UndefinedFalsy.Value;
+                    return true;
+                }
+
+                dynamic value = output;
+                result = NET.Falsy.Falsify(value);
+                return true;
+            }
+
+            result = UndefinedFalsy.Value;
+            return false;
         }
 
         public override bool TrySetIndex(SetIndexBinder binder, object[] indexes, object value)

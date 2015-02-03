@@ -521,9 +521,9 @@ namespace Falsy.Tests
         public void FalsyCanCallMethods()
         {
             var falsy = "test".Falsify();
-            var upper = falsy.ToUpper();
+            string upper = falsy.ToUpper();
 
-            Assert.AreEqual(upper, "TEST");
+            Assert.AreEqual("TEST", upper);
 
 
             var test = new TestClass().Falsify();
@@ -537,7 +537,7 @@ namespace Falsy.Tests
 
             var msg = "Message";
 
-            var result = test.Run2(msg);
+            string result = test.Run2(msg);
 
             Assert.AreEqual(msg, result);
         }
@@ -790,5 +790,17 @@ namespace Falsy.Tests
             Assert.AreEqual(5, count2, "Dictionary Should Set Indexes");
             Assert.AreEqual("10", count3, "Dictionary Should Set Indexes");
         }
+
+
+	    [TestMethod]
+	    public void FalsyShouldBeAValidParameter()
+	    {
+		    var value = "this is a test".Falsify();
+			var startIndex = 10.Falsify();
+
+		    string result = value.Substring(startIndex);
+
+			Assert.AreEqual("test", result);
+	    }
     }
 }

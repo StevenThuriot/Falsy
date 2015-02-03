@@ -60,8 +60,13 @@ namespace Falsy.NET.Internals
             return false;
         }
 
+	    protected internal override dynamic GetValue()
+	    {
+		    return null;
+	    }
 
-        public override bool Equals(DynamicFalsy arg)
+
+	    public override bool Equals(DynamicFalsy arg)
         {
             return ReferenceEquals(null, arg) || arg.IsFalsyNull();
         }
