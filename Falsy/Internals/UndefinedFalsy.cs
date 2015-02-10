@@ -18,6 +18,7 @@
 
 #endregion
 
+using System.Collections;
 using System.Diagnostics;
 using System.Dynamic;
 using System.Linq.Expressions;
@@ -26,7 +27,7 @@ using Invocation;
 namespace Falsy.NET.Internals
 {
     [DebuggerDisplay("undefined", Name = "Falsy")]
-    public sealed class UndefinedFalsy : DynamicFalsy
+    public sealed class UndefinedFalsy : DynamicFalsy, IEnumerable
     {
         internal static readonly dynamic Value = new UndefinedFalsy();
 
@@ -40,7 +41,12 @@ namespace Falsy.NET.Internals
             return "undefined";
         }
 
-        public override bool IsFalsyEquivalent()
+	    public IEnumerator GetEnumerator()
+	    {
+		    yield break;
+	    }
+
+	    public override bool IsFalsyEquivalent()
         {
             return false;
         }

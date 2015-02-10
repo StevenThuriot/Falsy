@@ -88,13 +88,7 @@ namespace Falsy.NET.Internals
                 Falsy = nullCheck;
             }
         }
-
-
-        public DynamicFalsy()
-        {
-            throw new NotSupportedException("Creating instances of DynamicFalsy is not allowed.");
-        }
-
+		
         internal DynamicFalsy(T instance)
         {
             _instance = instance;

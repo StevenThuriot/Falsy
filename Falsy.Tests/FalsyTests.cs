@@ -20,19 +20,27 @@
 
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
+using System.Linq;
 using Falsy.NET;
+using Falsy.NET.Internals;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Falsy.Tests
 {
-    [TestClass]
+	[TestClass]
     public class FalsyTests
     {
+		public dynamic FalsyNull
+		{
+			get { return NET.Falsy.Falsify((object) null); }
+		}
+
         [TestMethod]
         public void NullIsFalse()
         {
-            var value = NET.Falsy.Falsify(null);
+            var value = FalsyNull;
 
             if (value)
             {
@@ -585,16 +593,16 @@ namespace Falsy.Tests
         [TestMethod]
         public void NullShouldBeFalseButNotEquivalent()
         {
-            bool f = (NET.Falsy.Falsify(null) == false); // false
+            bool f = (FalsyNull == false); // false
             bool f2 = (null == false.Falsify()); // false
-            bool f3 = (NET.Falsy.Falsify(null) == false.Falsify()); // false
+            bool f3 = (FalsyNull == false.Falsify()); // false
             Assert.IsFalse(f);
             Assert.IsFalse(f2);
             Assert.IsFalse(f3);
 
-            bool g = (null == NET.Falsy.Falsify(null)); // true
-            bool g2 = (NET.Falsy.Falsify(null) == null); // true
-            bool g3 = (NET.Falsy.Falsify(null) == NET.Falsy.Falsify(null)); // true
+            bool g = (null == FalsyNull); // true
+            bool g2 = (FalsyNull == null); // true
+            bool g3 = (FalsyNull == FalsyNull); // true
             Assert.IsTrue(g); //Problem case..
             Assert.IsTrue(g2); //Problem case..
             Assert.IsTrue(g3);
@@ -609,8 +617,8 @@ namespace Falsy.Tests
             Assert.IsFalse(h2);
 
             bool i = (NET.Falsy.undefined == null); // true
-            bool i2 = (NET.Falsy.undefined == NET.Falsy.Falsify(null)); // true
-            bool i3 = (NET.Falsy.Falsify(null) == NET.Falsy.undefined); // true
+            bool i2 = (NET.Falsy.undefined == FalsyNull); // true
+            bool i3 = (FalsyNull == NET.Falsy.undefined); // true
             Assert.IsTrue(i);
             Assert.IsTrue(i2);
             Assert.IsTrue(i3);
@@ -620,8 +628,8 @@ namespace Falsy.Tests
         public void NaNShouldBeAWeirdo()
         {
             bool j = (Single.NaN.Falsify() == null); // false
-            bool j2 = (Single.NaN == NET.Falsy.Falsify(null)); // false
-            bool j3 = (Single.NaN.Falsify() == NET.Falsy.Falsify(null)); // false
+            bool j2 = (Single.NaN == FalsyNull); // false
+            bool j3 = (Single.NaN.Falsify() == FalsyNull); // false
             Assert.IsFalse(j);
             Assert.IsFalse(j2);
             Assert.IsFalse(j3);
@@ -634,8 +642,8 @@ namespace Falsy.Tests
             Assert.IsFalse(k3);
 
             bool l = (double.NaN.Falsify() == null); // false
-            bool l2 = (double.NaN == NET.Falsy.Falsify(null)); // false
-            bool l3 = (double.NaN.Falsify() == NET.Falsy.Falsify(null)); // false
+            bool l2 = (double.NaN == FalsyNull); // false
+            bool l3 = (double.NaN.Falsify() == FalsyNull); // false
             Assert.IsFalse(l);
             Assert.IsFalse(l2);
             Assert.IsFalse(l3);
@@ -802,5 +810,50 @@ namespace Falsy.Tests
 
 			Assert.AreEqual("test", result);
 	    }
+
+		[TestMethod]
+		public void FalsyShouldBeEnumerable()
+		{
+			var value = "enumerable";
+			var enumerable = value.Falsify();
+			var i = 0;
+
+			int length = enumerable.Length;
+
+			Assert.AreEqual(value.Length, length);
+
+			foreach (char character in enumerable)
+			{
+				var c = value[i++];
+				
+				Assert.AreEqual(c, character);
+			}
+		}
+
+		[TestMethod]
+		public void FalsyDictionaryShouldBeEnumerable()
+		{
+			var dictionary = new Dictionary<string, int>
+			            {
+							{"one", 1},
+							{"two", 2},
+							{"three", 3},
+			            };
+
+			var enumerable = dictionary.Falsify();
+
+			int length = enumerable.Count;
+			Assert.AreEqual(dictionary.Count, length);
+
+			foreach (var kvp in enumerable)
+			{
+				string key = kvp.Key;
+				int value = kvp.Value;
+
+				var actualValue = dictionary[key];
+
+				Assert.AreEqual(actualValue, value);
+			}
+		}
     }
 }

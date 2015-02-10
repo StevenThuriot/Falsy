@@ -31,24 +31,31 @@ namespace Falsy.NET
         public static dynamic Falsify(this object instance)
         {
             return ReferenceEquals(null, instance)
-                ? UndefinedFalsy.Value
+                ? undefined
                 //Resolve actual type through the DLR
                 : InternalFalsify((dynamic) instance);
         }
-
-
-        public static dynamic Falsify<TKey, TValue>(this IDictionary<TKey, TValue> instance)
+		
+        public static dynamic Falsify(this IEnumerable instance)
         {
             return ReferenceEquals(null, instance)
-                ? UndefinedFalsy.Value
+                ? undefined
+                //Resolve actual type through the DLR
+                : InternalEnumerableFalsify((dynamic) instance);
+        }
+
+		public static dynamic Falsify<TKey, TValue>(this IDictionary<TKey, TValue> instance)
+        {
+            return ReferenceEquals(null, instance)
+                ? undefined
                 //Resolve actual type through the DLR
                 : InternalDictionaryFalsify((dynamic) instance);
         }
 
-        internal static dynamic Falsify(this DynamicFalsy instance)
+        public static dynamic Falsify(this DynamicFalsy instance)
         {
             return ReferenceEquals(null, instance)
-                ? UndefinedFalsy.Value
+                ? undefined
                 : instance;
         }
 
@@ -58,6 +65,11 @@ namespace Falsy.NET
             return new DynamicFalsy<T>(instance);
         }
 
+        private static dynamic InternalEnumerableFalsify<T>(T instance)
+            where T : IEnumerable
+        {
+            return new EnumerableFalsy<T>(instance);
+        }
         private static dynamic InternalDictionaryFalsify<T>(T instance)
             where T : IDictionary
         {

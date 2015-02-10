@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -29,10 +30,26 @@ namespace Falsy.Tests
     {
         public static void Main()
         {
-            const double interval = 100d;
-            const double threshold = 0.015d;
+            const double interval = 150d;
+            const double threshold = 0.02d;
             
             RunTimings<FalsyTests>(interval, threshold);
+        }
+
+        private static IEnumerable<char> AddSpaces(this string value)
+        {
+            yield return value[0];
+
+            foreach (var character in value.Skip(1))
+            {
+                if (char.IsUpper(character)) yield return ' ';
+                yield return character;
+            }
+        }
+
+        private static string Readable(this string value)
+        {
+            return string.Join("", value.AddSpaces());
         }
 
         private static void RunTimings<T>(double interval, double threshold)
@@ -46,6 +63,11 @@ namespace Falsy.Tests
             var methods =
                 type.GetMethods()
                     .Where(x => x.GetCustomAttribute<TestMethodAttribute>() != null && x.GetCustomAttribute<ExpectedExceptionAttribute>() == null)
+                    .Select(x => new
+                                 {
+                                     Name = x.Name.Readable(),
+                                     Method = x.BuildLazy()
+                                 })
                     .ToList();
 
             var longestName = methods.Max(x => x.Name.Length);
@@ -56,12 +78,12 @@ namespace Falsy.Tests
             Console.WriteLine(" \t- Interval  : {0}", interval);
             Console.WriteLine(" \t- Threshold : {0}", threshold);
 
-            var line = " ♦" + new string('-', longestName + 22) + "♦";
+            var line = " ♦" + new string('-', longestName + 23) + "♦";
             Console.WriteLine(line);
 
-            foreach (var method in methods)
+            foreach (var item in methods)
             {
-                dynamic @delegate = method.Build();
+                dynamic @delegate = item.Method.Value;
 
                 //Warmup
                 @delegate(test);
@@ -79,7 +101,7 @@ namespace Falsy.Tests
 
                 watch.Stop();
 
-                Console.Write(alignment, method.Name);
+                Console.Write(alignment, item.Name);
                 Console.Write(" : ");
 
                 var totalMilliseconds = watch.Elapsed.TotalMilliseconds;
@@ -89,7 +111,7 @@ namespace Falsy.Tests
 
                 Console.ForegroundColor = average > threshold ? ConsoleColor.Red : ConsoleColor.Green;
 
-                Console.Write("{0,-11:0.000000000}", average);
+                Console.Write("{0,-11:00.000000000}", average);
 
                 Console.ResetColor();
 
@@ -101,7 +123,7 @@ namespace Falsy.Tests
             Console.Write(alignment, "Total Execution Time");
             Console.Write(" : ");
             Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.Write("{0,-11:0.000000000}", total);
+            Console.Write("{0,-11:00.000000000}", total);
             Console.ResetColor();
             Console.WriteLine(" ms |");
 
@@ -109,7 +131,7 @@ namespace Falsy.Tests
             Console.Write(alignment, "Average Per Call");
             Console.Write(" : ");
             Console.ForegroundColor = totalAverage > threshold ? ConsoleColor.Red : ConsoleColor.Green;
-            Console.Write("{0,-11:0.000000000}", totalAverage);
+            Console.Write("{0,-11:00.000000000}", totalAverage);
             Console.ResetColor();
             Console.WriteLine(" ms |");
 

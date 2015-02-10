@@ -21,12 +21,11 @@
 using System.Collections;
 using System.Diagnostics;
 using System.Dynamic;
-using Invocation;
 
 namespace Falsy.NET.Internals
 {
     [DebuggerDisplay("DictionaryFalsy: {_instance} == {GetBooleanValue()}")]
-    public class DictionaryFalsy<T> : DynamicFalsy<T>
+    public class DictionaryFalsy<T> : EnumerableFalsy<T>
         where T : IDictionary
     {
         internal DictionaryFalsy(T instance)
@@ -58,31 +57,6 @@ namespace Falsy.NET.Internals
         {
             _instance[binder.Name] = value;
             return true;
-        }
-
-        public override bool TryGetIndex(GetIndexBinder binder, object[] indexes, out object result)
-        {
-            object output;
-            if (TypeInfo<T>.TryGetIndexer(_instance, indexes, out output))
-            {
-                if (ReferenceEquals(null, output))
-                {
-                    result = UndefinedFalsy.Value;
-                    return true;
-                }
-
-                dynamic value = output;
-                result = NET.Falsy.Falsify(value);
-                return true;
-            }
-
-            result = UndefinedFalsy.Value;
-            return false;
-        }
-
-        public override bool TrySetIndex(SetIndexBinder binder, object[] indexes, object value)
-        {
-            return TypeInfo<T>.TrySetIndexer(_instance, indexes, value);
         }
     }
 }

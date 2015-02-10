@@ -90,6 +90,7 @@
     <Compile Include="Internals\DynamicFalsy.cs" />
     <Compile Include="Internals\DynamicFalsy.Generic.cs" />
     <Compile Include="Falsy.cs" />
+    <Compile Include="Internals\EnumerableFalsy.cs" />
     <Compile Include="Internals\FalsyTypeConverter.cs" />
     <Compile Include="Internals\NumericInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
