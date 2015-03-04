@@ -18,6 +18,9 @@
 
 #endregion
 
+using System.Collections.Generic;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
 namespace Falsy.Tests
 {
     public class TestClass
@@ -31,5 +34,14 @@ namespace Falsy.Tests
         {
             return message;
         }
+
+
+
+        public void TestEnumerable<T>(IEnumerable<T> value)
+        {
+            Assert.AreNotEqual(typeof(object), typeof(T));
+        }
+
+
     }
 }

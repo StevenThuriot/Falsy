@@ -525,6 +525,7 @@ namespace Falsy.Tests
         }
 
 
+
         [TestMethod]
         public void FalsyCanCallMethods()
         {
@@ -532,8 +533,7 @@ namespace Falsy.Tests
             string upper = falsy.ToUpper();
 
             Assert.AreEqual("TEST", upper);
-
-
+            
             var test = new TestClass().Falsify();
             var toggle = new Toggle();
 
@@ -550,8 +550,30 @@ namespace Falsy.Tests
             Assert.AreEqual(msg, result);
         }
 
+	    [TestMethod]
+	    public void FalsyCanCallGenericMethods()
+        {
+            var t = new TestClass().Falsify();
+	        var list = Enumerable.Repeat(5, 4).ToList();
 
-        [TestMethod]
+            t.TestEnumerable(list);
+	    }
+
+	    [TestMethod]
+	    public void FalsyCanCallStaticGenericMethods()
+        {
+            var falsy = "test".Falsify();
+            falsy.Join("a", new List<object> { "c", "d" });
+	    }
+
+	    [TestMethod]
+	    public void FalsyCanCallStaticMethods()
+        {
+            var falsy = "test".Falsify();
+            falsy.Join("a", new List<string> { "c", "d" });
+	    }
+
+	    [TestMethod]
         public void InverseShouldWork()
         {
             bool a = !!(0.Falsify()); // variable is set to false
