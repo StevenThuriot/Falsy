@@ -49,7 +49,19 @@ namespace Falsy.NET.Internals
 
         public static bool IsNumeric(this Type type)
         {
-            return NumericTypes.Contains(type);
+            if (!type.IsValueType)
+                return false;
+
+            var numericTypes = NumericTypes;
+
+            if (numericTypes.Contains(type))
+                return true;
+
+            var underlying = Nullable.GetUnderlyingType(type);
+            if (underlying == null)
+                return false;
+
+            return numericTypes.Contains(underlying);
         }
 
 
