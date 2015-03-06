@@ -38,7 +38,7 @@ namespace Falsy.NET.Internals
 			object output;
 			if (TypeInfo<T>.TryGetIndexer(_instance, indexes, out output))
 			{
-				if (ReferenceEquals(null, output))
+				if (Reference.IsNull(output))
 				{
 					result = UndefinedFalsy.Value;
 					return true;

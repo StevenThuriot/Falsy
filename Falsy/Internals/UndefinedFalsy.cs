@@ -74,12 +74,12 @@ namespace Falsy.NET.Internals
 
 	    public override bool Equals(DynamicFalsy arg)
         {
-            return ReferenceEquals(null, arg) || arg.IsFalsyNull();
+            return Reference.IsNull(arg) || arg.IsFalsyNull();
         }
 
         protected override bool InternalEquals(object o)
         {
-            return ReferenceEquals(null, o);
+            return Reference.IsNull(o);
         }
 
 

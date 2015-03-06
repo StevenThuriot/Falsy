@@ -30,7 +30,7 @@ namespace Falsy.NET
 
         public static dynamic Falsify(this object instance)
         {
-            return ReferenceEquals(null, instance)
+            return Reference.IsNull(instance)
                 ? undefined
                 //Resolve actual type through the DLR
                 : InternalFalsify((dynamic) instance);
@@ -38,7 +38,7 @@ namespace Falsy.NET
 		
         public static dynamic Falsify(this IEnumerable instance)
         {
-            return ReferenceEquals(null, instance)
+            return Reference.IsNull(instance)
                 ? undefined
                 //Resolve actual type through the DLR
                 : InternalEnumerableFalsify((dynamic) instance);
@@ -46,7 +46,7 @@ namespace Falsy.NET
 
 		public static dynamic Falsify<TKey, TValue>(this IDictionary<TKey, TValue> instance)
         {
-            return ReferenceEquals(null, instance)
+            return Reference.IsNull(instance)
                 ? undefined
                 //Resolve actual type through the DLR
                 : InternalDictionaryFalsify((dynamic) instance);
@@ -54,7 +54,7 @@ namespace Falsy.NET
 
         public static dynamic Falsify(this DynamicFalsy instance)
         {
-            return ReferenceEquals(null, instance)
+            return Reference.IsNull(instance)
                 ? undefined
                 : instance;
         }

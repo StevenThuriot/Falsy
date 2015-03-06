@@ -49,7 +49,7 @@ namespace Falsy.NET.Internals
 
         static DynamicFalsy()
         {
-            Predicate<T> nullCheck = obj => ReferenceEquals(null, obj);
+            Predicate<T> nullCheck = obj => Reference.IsNull(obj);
 
             if (Constants.Typed<T>.OwnerType == Constants.StringType)
             {
@@ -106,7 +106,7 @@ namespace Falsy.NET.Internals
 
             if (TypeInfo<T>.TryGetProperty(_instance, binder.Name, out prop))
             {
-                if (ReferenceEquals(null, prop))
+                if (Reference.IsNull(prop))
                 {
                     result = UndefinedFalsy.Value;
                     return true;
@@ -119,7 +119,7 @@ namespace Falsy.NET.Internals
 
             if (TypeInfo<T>.TryGetField(_instance, binder.Name, out prop))
             {
-                if (ReferenceEquals(null, prop))
+                if (Reference.IsNull(prop))
                 {
                     result = UndefinedFalsy.Value;
                     return true;
@@ -145,7 +145,7 @@ namespace Falsy.NET.Internals
             object output;
             if (TypeInfo<T>.TryCall(_instance, binder, args, out output))
             {
-                if (ReferenceEquals(null, output))
+                if (Reference.IsNull(output))
                 {
                     result = UndefinedFalsy.Value;
                     return true;
@@ -300,7 +300,7 @@ namespace Falsy.NET.Internals
 
         public override bool Equals(DynamicFalsy arg)
         {
-            if (ReferenceEquals(null, arg))
+            if (Reference.IsNull(arg))
                 return _isFalsyNull.Value;
 
             if (_isFalsyNull.Value)
@@ -325,7 +325,7 @@ namespace Falsy.NET.Internals
 
         protected override bool InternalEquals(object o)
         {
-            if (ReferenceEquals(null, o))
+            if (Reference.IsNull(o))
                 return _isFalsyNull.Value;
 
             //If o is T, then compare it to our actual value

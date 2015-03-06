@@ -39,7 +39,7 @@ namespace Falsy.NET.Internals
             {
                 var value = _instance[binder.Name];
 
-                if (ReferenceEquals(null, value))
+                if (Reference.IsNull(value))
                 {
                     result = UndefinedFalsy.Value;
                     return true;
