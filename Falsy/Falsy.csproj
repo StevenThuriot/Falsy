@@ -65,6 +65,8 @@
     <Compile Include="Falsy.cs" />
     <Compile Include="Internals\EnumerableFalsy.cs" />
     <Compile Include="Internals\FalsyTypeConverter.cs" />
+    <Compile Include="Internals\TypedDictionaryBuilder.cs" />
+    <Compile Include="Internals\TypedDictionaryFalsy.cs" />
     <Compile Include="Internals\NumericInfo.cs" />
     <Compile Include="Invoker\Reference.cs" />
     <Compile Include="Invoker\Argument.cs" />

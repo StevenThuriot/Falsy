@@ -18,8 +18,10 @@
 
 #endregion
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Falsy.NET.Internals;
 using Invocation;
 
@@ -29,6 +31,7 @@ namespace Falsy.NET
     {
         public static readonly dynamic undefined = UndefinedFalsy.Value;
 
+
         public static dynamic Falsify(this object instance)
         {
             return Reference.IsNull(instance)
@@ -36,7 +39,7 @@ namespace Falsy.NET
                 //Resolve actual type through the DLR
                 : InternalFalsify((dynamic) instance);
         }
-		
+
         public static dynamic Falsify(this IEnumerable instance)
         {
             return Reference.IsNull(instance)
@@ -45,12 +48,16 @@ namespace Falsy.NET
                 : InternalEnumerableFalsify((dynamic) instance);
         }
 
-		public static dynamic Falsify<TKey, TValue>(this IDictionary<TKey, TValue> instance)
+        public static dynamic Falsify(this IDictionary instance)
         {
-            return Reference.IsNull(instance)
-                ? undefined
-                //Resolve actual type through the DLR
-                : InternalDictionaryFalsify((dynamic) instance);
+            if (Reference.IsNull(instance)) return undefined;
+
+            var @interface = instance.GetType().GetInterface(Constants.GenericDictionaryDefinition.Name);
+
+            if (@interface == null) 
+                return InternalDictionaryFalsify((dynamic) instance);
+
+            return InternalTypedDictionaryFalsify((dynamic) instance);
         }
 
         public static dynamic Falsify(this DynamicFalsy instance)
@@ -75,6 +82,10 @@ namespace Falsy.NET
             where T : IDictionary
         {
             return new DictionaryFalsy<T>(instance);
+        }
+        private static dynamic InternalTypedDictionaryFalsify<TKey, TValue>(IDictionary<TKey, TValue> instance)
+        {
+            return TypedDictionaryBuilder<TKey, TValue>.Build((dynamic)instance);
         }
     }
 }
