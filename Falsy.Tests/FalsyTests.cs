@@ -20,10 +20,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Dynamic;
+using System.Collections.Specialized;
 using System.Linq;
 using Falsy.NET;
-using Falsy.NET.Internals;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -34,7 +33,7 @@ namespace Falsy.Tests
     {
 		public dynamic FalsyNull
 		{
-			get { return NET.Falsy.Falsify((object) null); }
+			get { return ((object) null).Falsify(); }
 		}
 
         [TestMethod]
@@ -341,7 +340,7 @@ namespace Falsy.Tests
                 Assert.Fail("Instance Should Equal Its Original Value");
             }
 
-            var value3 = 5;
+            const int value3 = 5;
             var value4 = value3.Falsify();
 
             if (value4 != value3)
@@ -353,7 +352,7 @@ namespace Falsy.Tests
                 Assert.Fail("Instance Should Equal Its Original Value");
             }
 
-            var value5 = 0;
+            const int value5 = 0;
             var value6 = value5.Falsify();
 
             if (value6 != value5)
@@ -370,7 +369,7 @@ namespace Falsy.Tests
         [TestMethod]
         public void FalsyShouldUnbox()
         {
-            var value = "Test";
+            const string value = "Test";
             var falsy = value.Falsify();
 
             Assert.AreNotSame(value, falsy);
@@ -543,7 +542,7 @@ namespace Falsy.Tests
 
             Assert.IsTrue(toggle.Toggled);
 
-            var msg = "Message";
+            const string msg = "Message";
 
             string result = test.Run2(msg);
 
@@ -821,6 +820,25 @@ namespace Falsy.Tests
             Assert.AreEqual("10", count3, "Dictionary Should Set Indexes");
         }
 
+        [TestMethod]
+        public void NonGenericDictionariesShouldWork()
+        {
+            var dictionary = new ListDictionary();
+            
+            var falsy = dictionary.Falsify();
+
+            falsy.Test = 5;
+            falsy.Test2 = "10";
+
+            int count = falsy["Test"];
+            int count2 = falsy.Test;
+            string count3 = falsy.Test2;
+
+            Assert.AreEqual(5, count, "Dictionary Should Set Indexes");
+            Assert.AreEqual(5, count2, "Dictionary Should Set Indexes");
+            Assert.AreEqual("10", count3, "Dictionary Should Set Indexes");
+        }
+
 
 	    [TestMethod]
 	    public void FalsyShouldBeAValidParameter()
@@ -836,7 +854,7 @@ namespace Falsy.Tests
 		[TestMethod]
 		public void FalsyShouldBeEnumerable()
 		{
-			var value = "enumerable";
+			const string value = "enumerable";
 			var enumerable = value.Falsify();
 			var i = 0;
 

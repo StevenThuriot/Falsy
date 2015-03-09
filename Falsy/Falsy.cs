@@ -50,14 +50,10 @@ namespace Falsy.NET
 
         public static dynamic Falsify(this IDictionary instance)
         {
-            if (Reference.IsNull(instance)) return undefined;
-
-            var @interface = instance.GetType().GetInterface(Constants.GenericDictionaryDefinition.Name);
-
-            if (@interface == null) 
-                return InternalDictionaryFalsify((dynamic) instance);
-
-            return InternalTypedDictionaryFalsify((dynamic) instance);
+            return Reference.IsNull(instance)
+                ? undefined
+                //Resolve actual type through the DLR
+                : InternalDictionaryFalsify((dynamic)instance);
         }
 
         public static dynamic Falsify(this DynamicFalsy instance)
@@ -78,14 +74,14 @@ namespace Falsy.NET
         {
             return new EnumerableFalsy<T>(instance);
         }
+
         private static dynamic InternalDictionaryFalsify<T>(T instance)
             where T : IDictionary
         {
+            if (Constants.Typed<T>.IsGenericDictionary)
+                return TypedDictionaryBuilder.Build((dynamic) instance);
+
             return new DictionaryFalsy<T>(instance);
-        }
-        private static dynamic InternalTypedDictionaryFalsify<TKey, TValue>(IDictionary<TKey, TValue> instance)
-        {
-            return TypedDictionaryBuilder<TKey, TValue>.Build((dynamic)instance);
         }
     }
 }
