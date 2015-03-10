@@ -21,7 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using Invocation;
+using Horizon;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Falsy.Tests

@@ -1,3 +1,3 @@
-[submodule "Falsy/Invoker"]
-	path = Falsy/Invoker
-	url = https://github.com/StevenThuriot/Invoker.git
+[submodule "Falsy/Horizon"]
+	path = Falsy/Horizon
+	url = https://github.com/StevenThuriot/Horizon.git

@@ -18,12 +18,9 @@
 
 #endregion
 
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using Falsy.NET.Internals;
-using Invocation;
+using Horizon;
 
 namespace Falsy.NET
 {

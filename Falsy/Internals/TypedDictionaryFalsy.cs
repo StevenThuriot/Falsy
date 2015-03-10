@@ -21,7 +21,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Dynamic;
-using Invocation;
+using Horizon;
 
 namespace Falsy.NET.Internals
 {

@@ -20,7 +20,7 @@
 
 using System;
 using System.Dynamic;
-using Invocation;
+using Horizon;
 
 namespace Falsy.NET.Internals
 {

@@ -23,7 +23,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Dynamic;
 using System.Linq.Expressions;
-using Invocation;
+using Horizon;
 
 namespace Falsy.NET.Internals
 {

@@ -21,7 +21,7 @@
 using System;
 using System.ComponentModel;
 using System.Globalization;
-using Invocation;
+using Horizon;
 
 namespace Falsy.NET.Internals
 {

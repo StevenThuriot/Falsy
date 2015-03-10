@@ -68,24 +68,24 @@
     <Compile Include="Internals\TypedDictionaryBuilder.cs" />
     <Compile Include="Internals\TypedDictionaryFalsy.cs" />
     <Compile Include="Internals\NumericInfo.cs" />
-    <Compile Include="Invoker\Reference.cs" />
-    <Compile Include="Invoker\Argument.cs" />
-    <Compile Include="Invoker\CallerSelector.cs" />
-    <Compile Include="Invoker\Constants.cs" />
-    <Compile Include="Invoker\GenericMethodCaller.cs" />
-    <Compile Include="Invoker\GenericType.cs" />
-    <Compile Include="Invoker\InvokeHelper.cs" />
-    <Compile Include="Invoker\InvokeHelper.g.cs">
+    <Compile Include="Horizon\Reference.cs" />
+    <Compile Include="Horizon\Argument.cs" />
+    <Compile Include="Horizon\CallerSelector.cs" />
+    <Compile Include="Horizon\Constants.cs" />
+    <Compile Include="Horizon\GenericMethodCaller.cs" />
+    <Compile Include="Horizon\GenericType.cs" />
+    <Compile Include="Horizon\InvokeHelper.cs" />
+    <Compile Include="Horizon\InvokeHelper.g.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>InvokeHelper.tt</DependentUpon>
     </Compile>
-    <Compile Include="Invoker\MethodCaller.cs" />
-    <Compile Include="Invoker\SelectableArgument.cs" />
-    <Compile Include="Invoker\SimpleParameterInfo.cs" />
-    <Compile Include="Invoker\TypeHash.cs" />
-    <Compile Include="Invoker\TypeInfo.AutoResolve.cs" />
-    <Compile Include="Invoker\TypeInfo.cs" />
+    <Compile Include="Horizon\MethodCaller.cs" />
+    <Compile Include="Horizon\SelectableArgument.cs" />
+    <Compile Include="Horizon\SimpleParameterInfo.cs" />
+    <Compile Include="Horizon\TypeHash.cs" />
+    <Compile Include="Horizon\TypeInfo.AutoResolve.cs" />
+    <Compile Include="Horizon\TypeInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Internals\UndefinedFalsy.cs" />
   </ItemGroup>
@@ -93,7 +93,7 @@
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Invoker\InvokeHelper.tt">
+    <None Include="Horizon\InvokeHelper.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>InvokeHelper.g.cs</LastGenOutput>
     </None>
