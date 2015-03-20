@@ -71,7 +71,7 @@ namespace Falsy.NET.Internals
             object instance = TypeInfo.Create(type);
 
             foreach (var node in nodes)
-                node.SetValue(instance);
+                node.Visit(instance);
 
             return instance;
         }
@@ -165,19 +165,26 @@ namespace Falsy.NET.Internals
 
 
 
-        internal abstract class DynamicMember
+        internal class DynamicMember
         {
             public readonly bool IsProperty;
             public readonly string Name;
+            private readonly Type _type;
 
-            protected DynamicMember(string name, bool isProperty)
+            public DynamicMember(string name, Type type, bool isProperty)
             {
                 Name = name;
+                _type = type;
                 IsProperty = isProperty;
             }
 
-            public abstract Type Type { get; }
-            public abstract void SetValue(dynamic instance);
+            public Type Type
+            {
+                get { return _type; }
+            }
+
+            public virtual void Visit(dynamic instance) { }
+
 
             public static DynamicMember Create<T>(string name, T value, bool isProperty = true)
             {
@@ -185,22 +192,17 @@ namespace Falsy.NET.Internals
             }
         }
 
-        internal class DynamicMember<T> : DynamicMember
+        internal sealed class DynamicMember<T> : DynamicMember
         {
             private readonly T _value;
 
             public DynamicMember(string name, T value, bool isProperty)
-                : base(name, isProperty)
+                : base(name, typeof(T), isProperty)
             {
                 _value = value;
             }
 
-            public override Type Type
-            {
-                get { return typeof (T); }
-            }
-
-            public override void SetValue(dynamic instance)
+            public override void Visit(dynamic instance)
             {
                 if (IsProperty)
                 {

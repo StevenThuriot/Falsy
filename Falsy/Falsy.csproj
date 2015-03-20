@@ -90,6 +90,7 @@
     <Compile Include="Horizon\TypeHash.cs" />
     <Compile Include="Horizon\TypeInfo.AutoResolve.cs" />
     <Compile Include="Horizon\TypeInfo.cs" />
+    <Compile Include="Internals\TypeFactory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Internals\UndefinedFalsy.cs" />
   </ItemGroup>
