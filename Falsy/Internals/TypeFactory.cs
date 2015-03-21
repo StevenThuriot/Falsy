@@ -24,37 +24,32 @@ using System.Dynamic;
 
 namespace Falsy.NET.Internals
 {
-    class TypeFactory : DynamicObject
+    public class TypeFactory : DynamicObject
     {
-        public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
+        public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
-            result = this;
-
             if ("NEW".Equals(binder.Name, StringComparison.OrdinalIgnoreCase))
             {
-                var nodes = CreateNodes(binder.CallInfo, args, objectsAreValues: false);
-                TypeBuilder.CreateTypeInstance(binder.Name, nodes);
-                return true;
-            }
-            
-            if ("DEFINE".Equals(binder.Name, StringComparison.OrdinalIgnoreCase))
-            {
-                var nodes = CreateNodes(binder.CallInfo, args, objectsAreValues: true);
-                TypeBuilder.CreateType(binder.Name, nodes);
+                result = new NewTypeFactory();
                 return true;
             }
 
+            if ("DEFINE".Equals(binder.Name, StringComparison.OrdinalIgnoreCase))
+            {
+                result = new DefineTypeFactory();
+                return true;
+            }
+
+            result = null;
             return false;
         }
 
-        private static IReadOnlyList<TypeBuilder.DynamicMember> CreateNodes(CallInfo callInfo, object[] args, bool objectsAreValues)
+        static IReadOnlyList<TypeBuilder.DynamicMember> CreateNodes(CallInfo callInfo, IReadOnlyList<object> args, bool objectsAreValues)
         {
             var result = new List<TypeBuilder.DynamicMember>();
 
-            if (callInfo.ArgumentCount != args.Length)
-            {
+            if (callInfo.ArgumentCount != args.Count)
                 throw new NotSupportedException("All arguments must be named.");
-            }
 
             var argumentNames = callInfo.ArgumentNames;
 
@@ -84,6 +79,25 @@ namespace Falsy.NET.Internals
             }
 
             return result;
+        }
+
+        public class NewTypeFactory : TypeFactory
+        {
+            public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
+            {
+                var nodes = CreateNodes(binder.CallInfo, args, objectsAreValues: true);
+                result = TypeBuilder.CreateTypeInstance(binder.Name, nodes);
+                return true;
+            }
+        }
+        public class DefineTypeFactory : TypeFactory
+        {
+            public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
+            {
+                var nodes = CreateNodes(binder.CallInfo, args, objectsAreValues: false);
+                result = TypeBuilder.CreateType(binder.Name, nodes);
+                return true;
+            }
         }
     }
 }

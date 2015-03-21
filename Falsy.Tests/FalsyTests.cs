@@ -25,6 +25,7 @@ using System.Linq;
 using Falsy.NET;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Falsy = Falsy.NET.Falsy;
 
 namespace Falsy.Tests
 {
@@ -895,5 +896,39 @@ namespace Falsy.Tests
 				Assert.AreEqual(actualValue, value);
 			}
 		}
+
+	    [TestMethod]
+	    public void FalsyCanCreateTypes()
+	    {
+	        var typeBuilder = NET.Falsy.Types;
+
+	        typeBuilder
+	           .Define
+	           .Person(
+	                   FirstName: typeof (string),
+	                   LastName: typeof (string),
+	                   Age: typeof (int)
+	            );
+
+	        var person =
+	            typeBuilder
+	               .New
+	               .Person(
+	                       Age: 25
+	                );
+
+	        Assert.IsNotNull((object) person);
+            Assert.IsNull(person.FirstName);
+            Assert.IsNull(person.LastName);
+	        Assert.AreEqual(25, person.Age);
+            
+	        person.FirstName = "Steven";
+	        person.LastName = "Thuriot";
+	        person.Age = 28;
+
+	        Assert.AreEqual("Steven", person.FirstName);
+	        Assert.AreEqual("Thuriot", person.LastName);
+	        Assert.AreEqual(28, person.Age);
+	    }
     }
 }

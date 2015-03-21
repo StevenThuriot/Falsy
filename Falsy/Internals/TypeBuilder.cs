@@ -65,7 +65,9 @@ namespace Falsy.NET.Internals
 
         internal static dynamic CreateTypeInstance(string typeName, IReadOnlyList<DynamicMember> nodes, Type parent = null)
         {
-            var type = CreateType(typeName, nodes, parent);
+            Type type;
+            if (!_typeCache.TryGetValue(typeName, out type))
+                throw new NotSupportedException("Unknown Falsy type.");
 
             // Now we have our type. Let's create an instance from it:
             object instance = TypeInfo.Create(type);

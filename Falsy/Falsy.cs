@@ -80,5 +80,17 @@ namespace Falsy.NET
 
             return new DictionaryFalsy<T>(instance);
         }
+
+
+
+
+        private static readonly TypeFactory _factory = new TypeFactory();
+        public static dynamic Types
+        {
+            get { return _factory; }
+        }
+
+
+
     }
 }
