@@ -84,10 +84,15 @@ namespace Falsy.NET
 
 
 
-        private static readonly TypeFactory _factory = new TypeFactory();
-        public static dynamic Types
+        private static readonly TypeFactory _newFactory = new TypeFactory.NewTypeFactory();
+        private static readonly TypeFactory _defineFactory = new TypeFactory.DefineTypeFactory();
+        public static dynamic Define
         {
-            get { return _factory; }
+            get { return _defineFactory; }
+        }
+        public static dynamic New
+        {
+            get { return _newFactory; }
         }
 
 

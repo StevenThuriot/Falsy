@@ -24,26 +24,8 @@ using System.Dynamic;
 
 namespace Falsy.NET.Internals
 {
-    public class TypeFactory : DynamicObject
+    public abstract class TypeFactory : DynamicObject
     {
-        public override bool TryGetMember(GetMemberBinder binder, out object result)
-        {
-            if ("NEW".Equals(binder.Name, StringComparison.OrdinalIgnoreCase))
-            {
-                result = new NewTypeFactory();
-                return true;
-            }
-
-            if ("DEFINE".Equals(binder.Name, StringComparison.OrdinalIgnoreCase))
-            {
-                result = new DefineTypeFactory();
-                return true;
-            }
-
-            result = null;
-            return false;
-        }
-
         static IReadOnlyList<TypeBuilder.DynamicMember> CreateNodes(CallInfo callInfo, IReadOnlyList<object> args, bool objectsAreValues)
         {
             var result = new List<TypeBuilder.DynamicMember>();

@@ -900,9 +900,7 @@ namespace Falsy.Tests
 	    [TestMethod]
 	    public void FalsyCanCreateTypes()
 	    {
-	        var typeBuilder = NET.Falsy.Types;
-
-	        typeBuilder
+	        NET.Falsy
 	           .Define
 	           .Person(
 	                   FirstName: typeof (string),
@@ -911,7 +909,7 @@ namespace Falsy.Tests
 	            );
 
 	        var person =
-	            typeBuilder
+                NET.Falsy
 	               .New
 	               .Person(
 	                       Age: 25
