@@ -21,6 +21,7 @@
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
+using System.Linq;
 
 namespace Falsy.NET.Internals
 {
@@ -45,7 +46,7 @@ namespace Falsy.NET.Internals
                     var name = argumentNames[i];
                     if (objectsAreValues)
                     {
-                        dynamicMember = TypeBuilder.DynamicMember.Create(name, argument);
+                        dynamicMember = TypeBuilder.DynamicMember.Create(name, (dynamic) argument, true, false);
                     }
                     else
                     {
@@ -53,7 +54,7 @@ namespace Falsy.NET.Internals
                         if (type == null)
                             throw new NotSupportedException("Definitions require a type.");
 
-                        dynamicMember = new TypeBuilder.DynamicMember(name, type, true);
+                        dynamicMember = new TypeBuilder.DynamicMember(name, type, true, false);
                     }
                 }
 
@@ -76,8 +77,31 @@ namespace Falsy.NET.Internals
         {
             public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
             {
+                if (StringComparer.OrdinalIgnoreCase.Equals("WITHINTERFACE", binder.Name))
+                {
+                    result = new InterfaceDefineTypeFactory(args.Cast<Type>().ToArray());
+                    return true;
+                }
+
+                
                 var nodes = CreateNodes(binder.CallInfo, args, objectsAreValues: false);
                 result = TypeBuilder.CreateType(binder.Name, nodes);
+                return true;
+            }
+        }
+        public class InterfaceDefineTypeFactory : TypeFactory
+        {
+            private readonly Type[] _interfaces;
+            public InterfaceDefineTypeFactory(Type[] interfaces)
+            {
+                //TODO: Check for overlap / only properties (for now). Overlap is alright if types match.
+                _interfaces = interfaces;
+            }
+
+            public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
+            {
+                var nodes = CreateNodes(binder.CallInfo, args, objectsAreValues: false);
+                result = TypeBuilder.CreateType(binder.Name, nodes, interfaces: _interfaces);
                 return true;
             }
         }

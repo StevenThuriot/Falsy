@@ -51,6 +51,7 @@ namespace Falsy.NET.Internals
     class TypeBuilder
     {
         private const MethodAttributes GetSetAttr = MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName;
+        private const MethodAttributes VirtGetSetAttr = MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.Virtual;
         
         private static readonly Dictionary<string, Type> _typeCache = new Dictionary<string, Type>();
         private static readonly ModuleBuilder _falsyModule;
@@ -78,7 +79,7 @@ namespace Falsy.NET.Internals
             return instance;
         }
 
-        internal static Type CreateType(string typeName, IReadOnlyList<DynamicMember> nodes, Type parent = null)
+        internal static Type CreateType(string typeName, IReadOnlyList<DynamicMember> nodes, Type parent = null, Type[] interfaces = null)
         {
             Type type;
             if (_typeCache.TryGetValue(typeName, out type))
@@ -97,11 +98,20 @@ namespace Falsy.NET.Internals
                 typeBuilder.SetParent(parent);
                 var properties = parent.GetProperties();
                 var fields = parent.GetFields();
-                var names = properties.Select(x => x.Name).Union(fields.Select(x => x.Name)).Distinct().ToList();
+                var names = properties.Select(x => x.Name).Union(fields.Select(x => x.Name)).ToList();
                 members = nodes.Where(x => !names.Contains(x.Name)).ToList();
             }
 
-            //TODO: typeBuilder.AddInterfaceImplementation(repositoryInteface);
+            if (interfaces != null)
+            {
+                foreach (var @interface in interfaces)
+                {
+                    typeBuilder.AddInterfaceImplementation(@interface);
+
+                    var properties = @interface.GetProperties().Select(x => new DynamicMember(x, isVirtual: true));
+                    members = members.Union(properties).ToList();
+                }
+            }
 
             foreach (var node in members)
             {
@@ -127,8 +137,10 @@ namespace Falsy.NET.Internals
 
                 if (isProperty)
                 {
+                    var methodAttributes = node.IsVirtual ? VirtGetSetAttr : GetSetAttr;
+
                     // Define the property getter method for our private field.
-                    var getBuilder = typeBuilder.DefineMethod("get_" + memberName, GetSetAttr, memberType, Type.EmptyTypes);
+                    var getBuilder = typeBuilder.DefineMethod("get_" + memberName, methodAttributes, memberType, Type.EmptyTypes);
 
                     // Hard IL stuff
                     var getIL = getBuilder.GetILGenerator();
@@ -139,7 +151,7 @@ namespace Falsy.NET.Internals
                     var parameterTypes = new[] { memberType };
 
                     // Define the property setter method for our private field.
-                    var setBuilder = typeBuilder.DefineMethod("set_" + memberName, GetSetAttr, null, parameterTypes);
+                    var setBuilder = typeBuilder.DefineMethod("set_" + memberName, methodAttributes, null, parameterTypes);
 
                     // Hard IL stuff
                     var setIL = setBuilder.GetILGenerator();
@@ -170,14 +182,31 @@ namespace Falsy.NET.Internals
         internal class DynamicMember
         {
             public readonly bool IsProperty;
+            public readonly bool IsVirtual;
             public readonly string Name;
             private readonly Type _type;
 
-            public DynamicMember(string name, Type type, bool isProperty)
+            public DynamicMember(string name, Type type, bool isProperty, bool isVirtual)
             {
                 Name = name;
                 _type = type;
                 IsProperty = isProperty;
+                IsVirtual = isVirtual;
+            }
+
+            public DynamicMember(PropertyInfo info, bool isVirtual)
+            {
+                Name = info.Name;
+                _type = info.PropertyType;
+                IsProperty = true;
+                IsVirtual = isVirtual;
+            }
+            public DynamicMember(FieldInfo info, bool isVirtual)
+            {
+                Name = info.Name;
+                _type = info.FieldType;
+                IsProperty = false;
+                IsVirtual = isVirtual;
             }
 
             public Type Type
@@ -188,9 +217,9 @@ namespace Falsy.NET.Internals
             public virtual void Visit(dynamic instance) { }
 
 
-            public static DynamicMember Create<T>(string name, T value, bool isProperty = true)
+            public static DynamicMember Create<T>(string name, T value, bool isProperty = true, bool isVirtual = false)
             {
-                return new DynamicMember<T>(name, value, isProperty);
+                return new DynamicMember<T>(name, value, isProperty, isVirtual);
             }
         }
 
@@ -198,8 +227,8 @@ namespace Falsy.NET.Internals
         {
             private readonly T _value;
 
-            public DynamicMember(string name, T value, bool isProperty)
-                : base(name, typeof(T), isProperty)
+            public DynamicMember(string name, T value, bool isProperty, bool isVirtual)
+                : base(name, typeof(T), isProperty, isVirtual)
             {
                 _value = value;
             }

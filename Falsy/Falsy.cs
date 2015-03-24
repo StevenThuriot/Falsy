@@ -18,6 +18,7 @@
 
 #endregion
 
+using System;
 using System.Collections;
 using Falsy.NET.Internals;
 using Horizon;
@@ -84,15 +85,15 @@ namespace Falsy.NET
 
 
 
-        private static readonly TypeFactory _newFactory = new TypeFactory.NewTypeFactory();
-        private static readonly TypeFactory _defineFactory = new TypeFactory.DefineTypeFactory();
+        private static readonly Lazy<TypeFactory> _newFactory = new Lazy<TypeFactory>(() => new TypeFactory.NewTypeFactory());
+        private static readonly Lazy<TypeFactory> _defineFactory = new Lazy<TypeFactory>(() => new TypeFactory.DefineTypeFactory());
         public static dynamic Define
         {
-            get { return _defineFactory; }
+            get { return _defineFactory.Value; }
         }
         public static dynamic New
         {
-            get { return _newFactory; }
+            get { return _newFactory.Value; }
         }
 
 

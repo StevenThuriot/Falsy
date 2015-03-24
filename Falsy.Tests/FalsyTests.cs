@@ -928,5 +928,25 @@ namespace Falsy.Tests
 	        Assert.AreEqual("Thuriot", person.LastName);
 	        Assert.AreEqual(28, person.Age);
 	    }
+
+	    [TestMethod]
+	    public void FalsyCanCreateTypesWithInterfaces()
+	    {
+	        NET.Falsy
+	           .Define
+               .WithInterface(typeof(IPerson))
+	           .Person2();
+
+	        IPerson person = NET.Falsy.New.Person2();
+            Assert.IsNotNull(person);
+
+            person.FirstName = "Steven";
+            person.LastName = "Thuriot";
+            person.Age = 28;
+
+            Assert.AreEqual("Steven", person.FirstName);
+            Assert.AreEqual("Thuriot", person.LastName);
+            Assert.AreEqual(28, person.Age);
+	    }
     }
 }
