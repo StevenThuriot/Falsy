@@ -26,7 +26,7 @@ using System.Reflection.Emit;
 using System.Threading;
 using TypeInfo = Horizon.TypeInfo;
 
-namespace Falsy.NET.Internals
+namespace Falsy.NET.Internals.TypeBuilder
 {
     /*
      * Goal:
@@ -51,7 +51,7 @@ namespace Falsy.NET.Internals
     class TypeBuilder
     {
         private const MethodAttributes GetSetAttr = MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName;
-        private const MethodAttributes VirtGetSetAttr = MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.Virtual;
+        private const MethodAttributes VirtGetSetAttr = GetSetAttr | MethodAttributes.Virtual;
         
         private static readonly Dictionary<string, Type> _typeCache = new Dictionary<string, Type>();
         private static readonly ModuleBuilder _falsyModule;
@@ -73,7 +73,7 @@ namespace Falsy.NET.Internals
             // Now we have our type. Let's create an instance from it:
             object instance = TypeInfo.Create(type);
 
-            foreach (var node in nodes)
+            foreach (var node in nodes.OfType<ICanVisit>())
                 node.Visit(instance);
 
             return instance;
@@ -172,78 +172,6 @@ namespace Falsy.NET.Internals
             // Generate our type and cache it.
             _typeCache[typeName] = type = typeBuilder.CreateType();
             return type;
-        }
-
-
-
-
-
-
-        internal class DynamicMember
-        {
-            public readonly bool IsProperty;
-            public readonly bool IsVirtual;
-            public readonly string Name;
-            private readonly Type _type;
-
-            public DynamicMember(string name, Type type, bool isProperty, bool isVirtual)
-            {
-                Name = name;
-                _type = type;
-                IsProperty = isProperty;
-                IsVirtual = isVirtual;
-            }
-
-            public DynamicMember(PropertyInfo info, bool isVirtual)
-            {
-                Name = info.Name;
-                _type = info.PropertyType;
-                IsProperty = true;
-                IsVirtual = isVirtual;
-            }
-            public DynamicMember(FieldInfo info, bool isVirtual)
-            {
-                Name = info.Name;
-                _type = info.FieldType;
-                IsProperty = false;
-                IsVirtual = isVirtual;
-            }
-
-            public Type Type
-            {
-                get { return _type; }
-            }
-
-            public virtual void Visit(dynamic instance) { }
-
-
-            public static DynamicMember Create<T>(string name, T value, bool isProperty = true, bool isVirtual = false)
-            {
-                return new DynamicMember<T>(name, value, isProperty, isVirtual);
-            }
-        }
-
-        internal sealed class DynamicMember<T> : DynamicMember
-        {
-            private readonly T _value;
-
-            public DynamicMember(string name, T value, bool isProperty, bool isVirtual)
-                : base(name, typeof(T), isProperty, isVirtual)
-            {
-                _value = value;
-            }
-
-            public override void Visit(dynamic instance)
-            {
-                if (IsProperty)
-                {
-                    TypeInfo.SetProperty(instance, Name, _value);
-                }
-                else
-                {
-                    TypeInfo.SetField(instance, Name, _value);
-                }
-            }
         }
     }
 }

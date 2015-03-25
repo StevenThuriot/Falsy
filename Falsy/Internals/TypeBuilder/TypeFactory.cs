@@ -23,13 +23,13 @@ using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
 
-namespace Falsy.NET.Internals
+namespace Falsy.NET.Internals.TypeBuilder
 {
     public abstract class TypeFactory : DynamicObject
     {
-        static IReadOnlyList<TypeBuilder.DynamicMember> CreateNodes(CallInfo callInfo, IReadOnlyList<object> args, bool objectsAreValues)
+        static IReadOnlyList<DynamicMember> CreateNodes(CallInfo callInfo, IReadOnlyList<object> args, bool objectsAreValues)
         {
-            var result = new List<TypeBuilder.DynamicMember>();
+            var result = new List<DynamicMember>();
 
             if (callInfo.ArgumentCount != args.Count)
                 throw new NotSupportedException("All arguments must be named.");
@@ -40,13 +40,13 @@ namespace Falsy.NET.Internals
             {
                 var argument = args[i];
 
-                var dynamicMember = argument as TypeBuilder.DynamicMember;
+                var dynamicMember = argument as DynamicMember;
                 if (dynamicMember == null)
                 {
                     var name = argumentNames[i];
                     if (objectsAreValues)
                     {
-                        dynamicMember = TypeBuilder.DynamicMember.Create(name, (dynamic) argument, true, false);
+                        dynamicMember = DynamicMember.Create(name, (dynamic) argument, true, false);
                     }
                     else
                     {
@@ -54,7 +54,7 @@ namespace Falsy.NET.Internals
                         if (type == null)
                             throw new NotSupportedException("Definitions require a type.");
 
-                        dynamicMember = new TypeBuilder.DynamicMember(name, type, true, false);
+                        dynamicMember = new DynamicMember(name, type, true, false);
                     }
                 }
 

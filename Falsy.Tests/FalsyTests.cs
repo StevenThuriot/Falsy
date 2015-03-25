@@ -935,9 +935,9 @@ namespace Falsy.Tests
 	        NET.Falsy
 	           .Define
                .WithInterface(typeof(IPerson))
-	           .Person2();
+	           .PersonWithInterface();
 
-	        IPerson person = NET.Falsy.New.Person2();
+            IPerson person = NET.Falsy.New.PersonWithInterface();
             Assert.IsNotNull(person);
 
             person.FirstName = "Steven";
@@ -947,6 +947,22 @@ namespace Falsy.Tests
             Assert.AreEqual("Steven", person.FirstName);
             Assert.AreEqual("Thuriot", person.LastName);
             Assert.AreEqual(28, person.Age);
+	    }
+
+	    [TestMethod]
+	    public void FalsyTypesCanHaveAFakeConstructor()
+	    {
+	        NET.Falsy
+	           .Define
+               .WithInterface(typeof(IPerson))
+               .PersonWithFakeCtor();
+
+            IPerson person = NET.Falsy.New.PersonWithFakeCtor(FirstName: "Steven");
+            Assert.IsNotNull(person);
+            
+            Assert.AreEqual("Steven", person.FirstName);
+            Assert.IsNull(person.LastName);
+            Assert.AreEqual(0, person.Age);
 	    }
     }
 }
