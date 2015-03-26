@@ -79,7 +79,7 @@ namespace Falsy.NET.Internals.TypeBuilder
             return instance;
         }
 
-        internal static Type CreateType(string typeName, IReadOnlyList<DynamicMember> nodes, Type parent = null, Type[] interfaces = null)
+        internal static Type CreateType(string typeName, IReadOnlyList<DynamicMember> nodes, Type parent = null, IEnumerable<Type> interfaces = null)
         {
             Type type;
             if (_typeCache.TryGetValue(typeName, out type))
