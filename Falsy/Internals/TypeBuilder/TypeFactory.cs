@@ -66,6 +66,8 @@ namespace Falsy.NET.Internals.TypeBuilder
 
         public class NewTypeFactory : TypeFactory
         {
+            internal NewTypeFactory() { }
+
             public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
             {
                 var nodes = CreateNodes(binder.CallInfo, args, objectsAreValues: true);
@@ -76,6 +78,8 @@ namespace Falsy.NET.Internals.TypeBuilder
         public class DefineTypeFactory : TypeFactory
         {
             private HashSet<Type> _interfaces;
+            
+            internal DefineTypeFactory() { }
 
             public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
             {
