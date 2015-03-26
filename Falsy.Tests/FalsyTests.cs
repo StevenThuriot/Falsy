@@ -21,6 +21,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Linq;
 using Falsy.NET;
 using Microsoft.CSharp.RuntimeBinder;
@@ -963,6 +964,36 @@ namespace Falsy.Tests
             Assert.AreEqual("Steven", person.FirstName);
             Assert.IsNull(person.LastName);
             Assert.AreEqual(0, person.Age);
+	    }
+
+	    [TestMethod]
+	    public void FalsyTypesCanNotifyChanges()
+	    {
+	        NET.Falsy
+	           .Define
+               .WithInterface(typeof(IPerson))
+               .NotifyChanges()
+               .PersonWhoNotifiesChanges();
+
+            IPerson person = NET.Falsy.New.PersonWhoNotifiesChanges(FirstName: "Steven");
+            Assert.IsNotNull(person);
+            Assert.IsTrue(person is INotifyPropertyChanged);
+
+            var notify = (INotifyPropertyChanged)person;
+	        
+            var count = 0;
+	        var handler = new PropertyChangedEventHandler(delegate { count++; });
+	        notify.PropertyChanged += handler;
+
+	        person.FirstName = "Test";
+	        person.Age = 28;
+
+            notify.PropertyChanged -= handler;
+
+            Assert.AreEqual("Test", person.FirstName);
+            Assert.IsNull(person.LastName);
+            Assert.AreEqual(28, person.Age);
+            Assert.AreEqual(2, count);
 	    }
     }
 }

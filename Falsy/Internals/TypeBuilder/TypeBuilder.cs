@@ -20,10 +20,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Threading;
+using Horizon;
 using TypeInfo = Horizon.TypeInfo;
 
 namespace Falsy.NET.Internals.TypeBuilder
@@ -50,9 +52,11 @@ namespace Falsy.NET.Internals.TypeBuilder
 
     class TypeBuilder
     {
-        private const MethodAttributes GetSetAttr = MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName;
+        private const MethodAttributes GetSetAttr =
+            MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName;
+
         private const MethodAttributes VirtGetSetAttr = GetSetAttr | MethodAttributes.Virtual;
-        
+
         private static readonly Dictionary<string, Type> _typeCache = new Dictionary<string, Type>();
         private static readonly ModuleBuilder _falsyModule;
 
@@ -64,7 +68,8 @@ namespace Falsy.NET.Internals.TypeBuilder
             _falsyModule = assemblyBuilder.DefineDynamicModule("FalsyModule_" + guid);
         }
 
-        internal static dynamic CreateTypeInstance(string typeName, IReadOnlyList<DynamicMember> nodes, Type parent = null)
+        internal static dynamic CreateTypeInstance(string typeName, IReadOnlyList<DynamicMember> nodes,
+                                                   Type parent = null)
         {
             Type type;
             if (!_typeCache.TryGetValue(typeName, out type))
@@ -79,14 +84,15 @@ namespace Falsy.NET.Internals.TypeBuilder
             return instance;
         }
 
-        internal static Type CreateType(string typeName, IReadOnlyList<DynamicMember> nodes, Type parent = null, IEnumerable<Type> interfaces = null)
+        internal static Type CreateType(string typeName, IReadOnlyList<DynamicMember> nodes, bool notifyChanges = false,
+                                        Type parent = null, IEnumerable<Type> interfaces = null)
         {
             Type type;
             if (_typeCache.TryGetValue(typeName, out type))
                 return type;
 
             var typeBuilder = _falsyModule.DefineType(typeName, TypeAttributes.Public | TypeAttributes.Class);
-            
+
             IReadOnlyList<DynamicMember> members;
 
             if (parent == null)
@@ -108,9 +114,16 @@ namespace Falsy.NET.Internals.TypeBuilder
                 {
                     typeBuilder.AddInterfaceImplementation(@interface);
 
-                    var properties = @interface.GetProperties().Select(x => new DynamicMember(x, isVirtual: true));
+                    var properties = @interface.GetProperties().Select(x => new DynamicMember(x, true));
                     members = members.Union(properties).ToList();
                 }
+            }
+            
+            MethodBuilder raiseEvent = null;
+            if (notifyChanges)
+            {
+                typeBuilder.AddInterfaceImplementation(typeof (INotifyPropertyChanged));
+                raiseEvent = GenerateINotifyPropertyChangedEvent(typeBuilder);
             }
 
             foreach (var node in members)
@@ -140,7 +153,8 @@ namespace Falsy.NET.Internals.TypeBuilder
                     var methodAttributes = node.IsVirtual ? VirtGetSetAttr : GetSetAttr;
 
                     // Define the property getter method for our private field.
-                    var getBuilder = typeBuilder.DefineMethod("get_" + memberName, methodAttributes, memberType, Type.EmptyTypes);
+                    var getBuilder = typeBuilder.DefineMethod("get_" + memberName, methodAttributes, memberType,
+                                                              Type.EmptyTypes);
 
                     // Hard IL stuff
                     var getIL = getBuilder.GetILGenerator();
@@ -148,20 +162,31 @@ namespace Falsy.NET.Internals.TypeBuilder
                     getIL.Emit(OpCodes.Ldfld, field);
                     getIL.Emit(OpCodes.Ret);
 
-                    var parameterTypes = new[] { memberType };
+                    var parameterTypes = new[] {memberType};
 
                     // Define the property setter method for our private field.
-                    var setBuilder = typeBuilder.DefineMethod("set_" + memberName, methodAttributes, null, parameterTypes);
+                    var setBuilder = typeBuilder.DefineMethod("set_" + memberName, methodAttributes, null,
+                                                              parameterTypes);
 
                     // Hard IL stuff
                     var setIL = setBuilder.GetILGenerator();
+
                     setIL.Emit(OpCodes.Ldarg_0);
                     setIL.Emit(OpCodes.Ldarg_1);
                     setIL.Emit(OpCodes.Stfld, field);
+
+                    if (notifyChanges)
+                    {
+                        setIL.Emit(OpCodes.Ldarg_0);
+                        setIL.Emit(OpCodes.Ldstr, memberName);
+                        setIL.Emit(OpCodes.Call, raiseEvent);
+                    }
+
                     setIL.Emit(OpCodes.Ret);
 
                     // Generate a public property
-                    var property = typeBuilder.DefineProperty(memberName, PropertyAttributes.None, memberType, parameterTypes);
+                    var property = typeBuilder.DefineProperty(memberName, PropertyAttributes.None, memberType,
+                                                              parameterTypes);
 
                     // Map our two methods created above to their corresponding behaviors, "get" and "set" respectively. 
                     property.SetGetMethod(getBuilder);
@@ -169,9 +194,125 @@ namespace Falsy.NET.Internals.TypeBuilder
                 }
             }
 
+            //if (parent != null)
+            //{
+            //    OverrideParentPropertiesForPropertyChanged(typeBuilder, parent, raiseEvent);
+            //}
+
             // Generate our type and cache it.
             _typeCache[typeName] = type = typeBuilder.CreateType();
             return type;
+        }
+
+        //private static void OverrideParentPropertiesForPropertyChanged(System.Reflection.Emit.TypeBuilder typeBuilder, Type parent, MethodBuilder raiseEvent)
+        //{
+        //    foreach (var pinfo in parent.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        //    {
+        //        if (pinfo.GetSetMethod().IsVirtual)
+        //        {
+        //            var pb = typeBuilder.DefineProperty(pinfo.Name, PropertyAttributes.None, pinfo.PropertyType, Type.EmptyTypes);
+                    
+        //            var getMethod = typeBuilder.DefineMethod("get_" + pinfo.Name, VirtGetSetAttr, pinfo.PropertyType, Type.EmptyTypes);
+                    
+        //            var generator = getMethod.GetILGenerator();
+        //            generator.Emit(OpCodes.Ldarg_0);
+        //            generator.Emit(OpCodes.Call, pinfo.GetGetMethod());
+        //            generator.Emit(OpCodes.Ret);
+                    
+        //            pb.SetGetMethod(getMethod);
+
+        //            var setMethod = typeBuilder.DefineMethod("set_" + pinfo.Name, VirtGetSetAttr, null, new[] { pinfo.PropertyType });
+                    
+        //            generator = setMethod.GetILGenerator();
+        //            generator.Emit(OpCodes.Ldarg_0);
+        //            generator.Emit(OpCodes.Ldstr, pinfo.Name);
+        //            generator.Emit(OpCodes.Call, raiseEvent);
+        //            generator.Emit(OpCodes.Ldarg_0);
+        //            generator.Emit(OpCodes.Ldarg_1);
+        //            generator.Emit(OpCodes.Call, pinfo.GetSetMethod());
+        //            generator.Emit(OpCodes.Ret);
+                    
+        //            pb.SetSetMethod(setMethod);
+        //        }
+        //    }
+        //}
+
+        private static MethodBuilder GenerateINotifyPropertyChangedEvent(System.Reflection.Emit.TypeBuilder typeBuilder)
+        {
+            var delegateType = typeof (Delegate);
+
+            var delegateMethodTypes = new[] {delegateType, delegateType};
+            var delegateCombine = delegateType.GetMethod("Combine", delegateMethodTypes);
+            var delegateRemove = delegateType.GetMethod("Remove", delegateMethodTypes);
+            
+            var propertyChangedEventHandlerType = typeof (PropertyChangedEventHandler);
+
+            var invokeDelegate = propertyChangedEventHandlerType.GetMethod("Invoke");
+            var eventBack = typeBuilder.DefineField("PropertyChanged", typeof (PropertyChangingEventHandler), FieldAttributes.Private);
+            var stringTypes = new[] { Constants.StringType };
+            var createEventArgs = typeof(PropertyChangingEventArgs).GetConstructor(stringTypes);
+            
+
+            var propertyChangedEventHandlerTypes = new[] {propertyChangedEventHandlerType};
+
+            var addPropertyChanged = typeBuilder.DefineMethod("add_PropertyChanged",
+                                                              VirtGetSetAttr |
+                                                              MethodAttributes.Final |
+                                                              MethodAttributes.NewSlot,
+                                                              Constants.VoidType,
+                                                              propertyChangedEventHandlerTypes);
+            var gen = addPropertyChanged.GetILGenerator();
+            gen.Emit(OpCodes.Ldarg_0);
+            gen.Emit(OpCodes.Ldarg_0);
+            gen.Emit(OpCodes.Ldfld, eventBack);
+            gen.Emit(OpCodes.Ldarg_1);
+            gen.Emit(OpCodes.Call, delegateCombine);
+            gen.Emit(OpCodes.Castclass, propertyChangedEventHandlerType);
+            gen.Emit(OpCodes.Stfld, eventBack);
+            gen.Emit(OpCodes.Ret);
+
+            var removePropertyChanged = typeBuilder.DefineMethod("remove_PropertyChanged",
+                                                                 VirtGetSetAttr |
+                                                                 MethodAttributes.Final |
+                                                                 MethodAttributes.NewSlot,
+                                                                 Constants.VoidType,
+                                                                 propertyChangedEventHandlerTypes);
+            gen = removePropertyChanged.GetILGenerator();
+            gen.Emit(OpCodes.Ldarg_0);
+            gen.Emit(OpCodes.Ldarg_0);
+            gen.Emit(OpCodes.Ldfld, eventBack);
+            gen.Emit(OpCodes.Ldarg_1);
+            gen.Emit(OpCodes.Call, delegateRemove);
+            gen.Emit(OpCodes.Castclass, propertyChangedEventHandlerType);
+            gen.Emit(OpCodes.Stfld, eventBack);
+            gen.Emit(OpCodes.Ret);
+
+            var raisePropertyChanged = typeBuilder.DefineMethod("OnPropertyChanged", MethodAttributes.Public, Constants.VoidType, stringTypes);
+            gen = raisePropertyChanged.GetILGenerator();
+            var lblDelegateOk = gen.DefineLabel();
+            gen.DeclareLocal(propertyChangedEventHandlerType);
+            gen.Emit(OpCodes.Nop);
+            gen.Emit(OpCodes.Ldarg_0);
+            gen.Emit(OpCodes.Ldfld, eventBack);
+            gen.Emit(OpCodes.Stloc_0);
+            gen.Emit(OpCodes.Ldloc_0);
+            gen.Emit(OpCodes.Ldnull);
+            gen.Emit(OpCodes.Ceq);
+            gen.Emit(OpCodes.Brtrue, lblDelegateOk);
+            gen.Emit(OpCodes.Ldloc_0);
+            gen.Emit(OpCodes.Ldarg_0);
+            gen.Emit(OpCodes.Ldarg_1);
+            gen.Emit(OpCodes.Newobj, createEventArgs);
+            gen.Emit(OpCodes.Callvirt, invokeDelegate);
+            gen.MarkLabel(lblDelegateOk);
+            gen.Emit(OpCodes.Ret);
+
+            var pcevent = typeBuilder.DefineEvent("PropertyChanged", EventAttributes.None, propertyChangedEventHandlerType);
+            pcevent.SetRaiseMethod(raisePropertyChanged);
+            pcevent.SetAddOnMethod(addPropertyChanged);
+            pcevent.SetRemoveOnMethod(removePropertyChanged);
+
+            return raisePropertyChanged;
         }
     }
 }

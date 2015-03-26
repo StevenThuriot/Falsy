@@ -78,12 +78,17 @@ namespace Falsy.NET.Internals.TypeBuilder
         public class DefineTypeFactory : TypeFactory
         {
             private HashSet<Type> _interfaces;
-            
+            private bool _propertyChanged;
+
             internal DefineTypeFactory() { }
 
             public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
             {
-                if (StringComparer.OrdinalIgnoreCase.Equals("WITHINTERFACE", binder.Name))
+                var cmp = StringComparer.OrdinalIgnoreCase;
+
+                var binderName = binder.Name;
+
+                if (cmp.Equals("WITHINTERFACE", binderName))
                 {
                     var types = args.Cast<Type>();
 
@@ -102,9 +107,16 @@ namespace Falsy.NET.Internals.TypeBuilder
                     return true;
                 }
 
-                
+                if (cmp.Equals("NOTIFYCHANGES", binderName))
+                {
+                    _propertyChanged = true;
+
+                    result = this;
+                    return true;
+                }
+
                 var nodes = CreateNodes(binder.CallInfo, args, objectsAreValues: false);
-                result = TypeBuilder.CreateType(binder.Name, nodes, interfaces: _interfaces);
+                result = TypeBuilder.CreateType(binderName, nodes, notifyChanges: _propertyChanged, interfaces: _interfaces);
                 return true;
             }
         }
