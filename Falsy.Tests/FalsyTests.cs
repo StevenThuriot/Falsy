@@ -995,5 +995,45 @@ namespace Falsy.Tests
             Assert.AreEqual(28, person.Age);
             Assert.AreEqual(2, count);
 	    }
+
+	    [TestMethod]
+	    public void ChangeNotificationsAreSmart()
+	    {
+	        NET.Falsy
+	           .Define
+               .WithInterface(typeof(IPerson))
+               .NotifyChanges()
+               .PersonWhoNotifiesChanges2();
+
+            IPerson person = NET.Falsy.New.PersonWhoNotifiesChanges2(FirstName: "Steven");
+            Assert.IsNotNull(person);
+            Assert.IsTrue(person is INotifyPropertyChanged);
+
+            var notify = (INotifyPropertyChanged)person;
+	        
+            var count = 0;
+	        var handler = new PropertyChangedEventHandler(delegate { count++; });
+	        notify.PropertyChanged += handler;
+
+	        person.FirstName = "Test"; //1
+	        person.FirstName = "Test";
+	        person.FirstName = "Test";
+	        person.FirstName = "Test";
+	        person.FirstName = "Test2";//2
+	        person.Age = 29;//3
+            person.Age = 28;//4
+            person.Age = 28;
+	        person.Age = 15;//5
+	        person.Age = 28;//6
+	        person.Age = 28;
+	        person.Age = 28;
+
+            notify.PropertyChanged -= handler;
+
+            Assert.AreEqual("Test2", person.FirstName);
+            Assert.IsNull(person.LastName);
+            Assert.AreEqual(28, person.Age);
+            Assert.AreEqual(6, count);
+	    }
     }
 }

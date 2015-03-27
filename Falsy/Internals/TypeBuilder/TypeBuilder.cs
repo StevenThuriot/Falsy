@@ -172,6 +172,18 @@ namespace Falsy.NET.Internals.TypeBuilder
                     var setIL = setBuilder.GetILGenerator();
 
                     setIL.Emit(OpCodes.Ldarg_0);
+                    setIL.Emit(OpCodes.Ldfld, field);
+                    setIL.Emit(OpCodes.Ldarg_1);
+
+                    var setFieldLabel = setIL.DefineLabel();
+                    setIL.Emit(OpCodes.Bne_Un_S, setFieldLabel);
+
+                    setIL.Emit(OpCodes.Ret);
+
+
+                    setIL.MarkLabel(setFieldLabel);
+                    setIL.Emit(OpCodes.Ldarg_0);
+
                     setIL.Emit(OpCodes.Ldarg_1);
                     setIL.Emit(OpCodes.Stfld, field);
 
