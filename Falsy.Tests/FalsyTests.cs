@@ -26,7 +26,6 @@ using System.Linq;
 using Falsy.NET;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Falsy = Falsy.NET.Falsy;
 
 namespace Falsy.Tests
 {
@@ -1003,9 +1002,9 @@ namespace Falsy.Tests
 	           .Define
                .WithInterface(typeof(IPerson))
                .NotifyChanges()
-               .PersonWhoNotifiesChanges2();
+               .SmartPersonWhoNotifiesChanges();
 
-            IPerson person = NET.Falsy.New.PersonWhoNotifiesChanges2(FirstName: "Steven");
+            IPerson person = NET.Falsy.New.SmartPersonWhoNotifiesChanges(FirstName: "Steven");
             Assert.IsNotNull(person);
             Assert.IsTrue(person is INotifyPropertyChanged);
 
