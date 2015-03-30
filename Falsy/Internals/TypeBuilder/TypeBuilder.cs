@@ -259,7 +259,7 @@ namespace Falsy.NET.Internals.TypeBuilder
         private static MethodBuilder GenerateINotifyPropertyChangedEvent(System.Reflection.Emit.TypeBuilder typeBuilder)
         {
             var propertyChangedEventHandlerType = Constants.Typed<PropertyChangedEventHandler>.OwnerType;
-            var eventBack = typeBuilder.DefineField("PropertyChanged", Constants.Typed<PropertyChangingEventHandler>.OwnerType, FieldAttributes.Private);
+            var eventBack = typeBuilder.DefineField("m_PropertyChanged", propertyChangedEventHandlerType, FieldAttributes.Private);
             var stringTypes = new[] { Constants.StringType };
 
             var propertyChangedEventHandlerTypes = new[] {propertyChangedEventHandlerType};
