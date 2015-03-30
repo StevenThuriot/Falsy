@@ -24,6 +24,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.InteropServices;
 using System.Threading;
 using Horizon;
 using TypeInfo = Horizon.TypeInfo;
@@ -207,48 +208,56 @@ namespace Falsy.NET.Internals.TypeBuilder
                 }
             }
 
-            //if (parent != null)
-            //{
-            //    OverrideParentPropertiesForPropertyChanged(typeBuilder, parent, raiseEvent);
-            //}
-
+            if (parent != null)
+            {
+                if (raiseEvent != null) OverrideParentPropertiesForPropertyChanged(typeBuilder, parent, raiseEvent);
+                //TODO: Check if parent is abstract and properties need to be implemented.
+            }
             // Generate our type and cache it.
             _typeCache[typeName] = type = typeBuilder.CreateType();
             return type;
         }
 
-        //private static void OverrideParentPropertiesForPropertyChanged(System.Reflection.Emit.TypeBuilder typeBuilder, Type parent, MethodBuilder raiseEvent)
-        //{
-        //    foreach (var pinfo in parent.GetProperties(BindingFlags.Public | BindingFlags.Instance))
-        //    {
-        //        if (pinfo.GetSetMethod().IsVirtual)
-        //        {
-        //            var pb = typeBuilder.DefineProperty(pinfo.Name, PropertyAttributes.None, pinfo.PropertyType, Type.EmptyTypes);
-                    
-        //            var getMethod = typeBuilder.DefineMethod("get_" + pinfo.Name, VirtGetSetAttr, pinfo.PropertyType, Type.EmptyTypes);
-                    
-        //            var generator = getMethod.GetILGenerator();
-        //            generator.Emit(OpCodes.Ldarg_0);
-        //            generator.Emit(OpCodes.Call, pinfo.GetGetMethod());
-        //            generator.Emit(OpCodes.Ret);
-                    
-        //            pb.SetGetMethod(getMethod);
+        private static void OverrideParentPropertiesForPropertyChanged(System.Reflection.Emit.TypeBuilder typeBuilder, IReflect parent, MethodInfo raiseEvent)
+        {
+            foreach (var propertyInfo in parent.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            {
+                var propertySetter = propertyInfo.GetSetMethod();
+                if (propertySetter == null) continue;
+                if (!propertySetter.IsVirtual) continue;
 
-        //            var setMethod = typeBuilder.DefineMethod("set_" + pinfo.Name, VirtGetSetAttr, null, new[] { pinfo.PropertyType });
-                    
-        //            generator = setMethod.GetILGenerator();
-        //            generator.Emit(OpCodes.Ldarg_0);
-        //            generator.Emit(OpCodes.Ldstr, pinfo.Name);
-        //            generator.Emit(OpCodes.Call, raiseEvent);
-        //            generator.Emit(OpCodes.Ldarg_0);
-        //            generator.Emit(OpCodes.Ldarg_1);
-        //            generator.Emit(OpCodes.Call, pinfo.GetSetMethod());
-        //            generator.Emit(OpCodes.Ret);
-                    
-        //            pb.SetSetMethod(setMethod);
-        //        }
-        //    }
-        //}
+                var pb = typeBuilder.DefineProperty(propertyInfo.Name, PropertyAttributes.None, propertyInfo.PropertyType, Type.EmptyTypes);
+
+                ILGenerator generator;
+
+                var propertyGetter = propertyInfo.GetGetMethod();
+                if (propertyGetter != null)
+                {
+                    var getMethod = typeBuilder.DefineMethod("get_" + propertyInfo.Name, VirtGetSetAttr, propertyInfo.PropertyType, Type.EmptyTypes);
+                    generator = getMethod.GetILGenerator();
+                    generator.Emit(OpCodes.Ldarg_0);
+                    generator.Emit(OpCodes.Call, propertyGetter);
+                    generator.Emit(OpCodes.Ret);
+
+                    pb.SetGetMethod(getMethod);
+                }
+                
+                
+                var setMethod = typeBuilder.DefineMethod("set_" + propertyInfo.Name, VirtGetSetAttr, null, new[] {propertyInfo.PropertyType});
+
+                //TODO: Check if property has changed compared to base? --> Requires an extra method call :(
+                generator = setMethod.GetILGenerator();
+                generator.Emit(OpCodes.Ldarg_0);
+                generator.Emit(OpCodes.Ldarg_1);
+                generator.Emit(OpCodes.Call, propertySetter);
+                generator.Emit(OpCodes.Ldarg_0);
+                generator.Emit(OpCodes.Ldstr, propertyInfo.Name);
+                generator.Emit(OpCodes.Call, raiseEvent);
+                generator.Emit(OpCodes.Ret);
+
+                pb.SetSetMethod(setMethod);
+            }
+        }
 
 
         private static readonly Lazy<MethodInfo> _delegateCombine = new Lazy<MethodInfo>(() => Constants.Typed<Delegate>.OwnerType.GetMethod("Combine", new[] { Constants.Typed<Delegate>.OwnerType, Constants.Typed<Delegate>.OwnerType }));
@@ -272,15 +281,15 @@ namespace Falsy.NET.Internals.TypeBuilder
                                                               MethodAttributes.NewSlot,
                                                               Constants.VoidType,
                                                               propertyChangedEventHandlerTypes);
-            var gen = addPropertyChanged.GetILGenerator();
-            gen.Emit(OpCodes.Ldarg_0);
-            gen.Emit(OpCodes.Ldarg_0);
-            gen.Emit(OpCodes.Ldfld, eventBack);
-            gen.Emit(OpCodes.Ldarg_1);
-            gen.Emit(OpCodes.Call, _delegateCombine.Value);
-            gen.Emit(OpCodes.Castclass, propertyChangedEventHandlerType);
-            gen.Emit(OpCodes.Stfld, eventBack);
-            gen.Emit(OpCodes.Ret);
+            var generator = addPropertyChanged.GetILGenerator();
+            generator.Emit(OpCodes.Ldarg_0);
+            generator.Emit(OpCodes.Ldarg_0);
+            generator.Emit(OpCodes.Ldfld, eventBack);
+            generator.Emit(OpCodes.Ldarg_1);
+            generator.Emit(OpCodes.Call, _delegateCombine.Value);
+            generator.Emit(OpCodes.Castclass, propertyChangedEventHandlerType);
+            generator.Emit(OpCodes.Stfld, eventBack);
+            generator.Emit(OpCodes.Ret);
 
             
             
@@ -291,37 +300,37 @@ namespace Falsy.NET.Internals.TypeBuilder
                                                                  MethodAttributes.NewSlot,
                                                                  Constants.VoidType,
                                                                  propertyChangedEventHandlerTypes);
-            gen = removePropertyChanged.GetILGenerator();
-            gen.Emit(OpCodes.Ldarg_0);
-            gen.Emit(OpCodes.Ldarg_0);
-            gen.Emit(OpCodes.Ldfld, eventBack);
-            gen.Emit(OpCodes.Ldarg_1);
-            gen.Emit(OpCodes.Call, _delegateRemove.Value);
-            gen.Emit(OpCodes.Castclass, propertyChangedEventHandlerType);
-            gen.Emit(OpCodes.Stfld, eventBack);
-            gen.Emit(OpCodes.Ret);
+            generator = removePropertyChanged.GetILGenerator();
+            generator.Emit(OpCodes.Ldarg_0);
+            generator.Emit(OpCodes.Ldarg_0);
+            generator.Emit(OpCodes.Ldfld, eventBack);
+            generator.Emit(OpCodes.Ldarg_1);
+            generator.Emit(OpCodes.Call, _delegateRemove.Value);
+            generator.Emit(OpCodes.Castclass, propertyChangedEventHandlerType);
+            generator.Emit(OpCodes.Stfld, eventBack);
+            generator.Emit(OpCodes.Ret);
 
 
 
             //OnPropertyChanged Method
             var raisePropertyChanged = typeBuilder.DefineMethod("OnPropertyChanged", MethodAttributes.Private, Constants.VoidType, stringTypes);
-            gen = raisePropertyChanged.GetILGenerator();
-            var lblDelegateOk = gen.DefineLabel();
-            gen.DeclareLocal(propertyChangedEventHandlerType);
-            gen.Emit(OpCodes.Ldarg_0);
-            gen.Emit(OpCodes.Ldfld, eventBack);
-            gen.Emit(OpCodes.Stloc_0);
-            gen.Emit(OpCodes.Ldloc_0);
-            gen.Emit(OpCodes.Ldnull);
-            gen.Emit(OpCodes.Ceq);
-            gen.Emit(OpCodes.Brtrue, lblDelegateOk);
-            gen.Emit(OpCodes.Ldloc_0);
-            gen.Emit(OpCodes.Ldarg_0);
-            gen.Emit(OpCodes.Ldarg_1);
-            gen.Emit(OpCodes.Newobj, _createEventArgs.Value);
-            gen.Emit(OpCodes.Callvirt, _invokeDelegate.Value);
-            gen.MarkLabel(lblDelegateOk);
-            gen.Emit(OpCodes.Ret);
+            generator = raisePropertyChanged.GetILGenerator();
+            var lblDelegateOk = generator.DefineLabel();
+            generator.DeclareLocal(propertyChangedEventHandlerType);
+            generator.Emit(OpCodes.Ldarg_0);
+            generator.Emit(OpCodes.Ldfld, eventBack);
+            generator.Emit(OpCodes.Stloc_0);
+            generator.Emit(OpCodes.Ldloc_0);
+            generator.Emit(OpCodes.Ldnull);
+            generator.Emit(OpCodes.Ceq);
+            generator.Emit(OpCodes.Brtrue, lblDelegateOk);
+            generator.Emit(OpCodes.Ldloc_0);
+            generator.Emit(OpCodes.Ldarg_0);
+            generator.Emit(OpCodes.Ldarg_1);
+            generator.Emit(OpCodes.Newobj, _createEventArgs.Value);
+            generator.Emit(OpCodes.Callvirt, _invokeDelegate.Value);
+            generator.MarkLabel(lblDelegateOk);
+            generator.Emit(OpCodes.Ret);
 
             //OnPropertyChanged event
             var pcevent = typeBuilder.DefineEvent("PropertyChanged", EventAttributes.None, propertyChangedEventHandlerType);

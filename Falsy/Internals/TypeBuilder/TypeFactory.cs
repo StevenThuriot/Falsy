@@ -79,6 +79,7 @@ namespace Falsy.NET.Internals.TypeBuilder
         {
             private HashSet<Type> _interfaces;
             private bool _propertyChanged;
+            private Type _parent;
 
             internal DefineTypeFactory() { }
 
@@ -115,8 +116,19 @@ namespace Falsy.NET.Internals.TypeBuilder
                     return true;
                 }
 
+                if (cmp.Equals("INHERITFROM", binderName))
+                {
+                    if (args.Length != 1)
+                        throw new NotSupportedException("You can only have 1 parent.");
+
+                    _parent = (Type) args[0];
+
+                    result = this;
+                    return true;
+                }
+
                 var nodes = CreateNodes(binder.CallInfo, args, objectsAreValues: false);
-                result = TypeBuilder.CreateType(binderName, nodes, notifyChanges: _propertyChanged, interfaces: _interfaces);
+                result = TypeBuilder.CreateType(binderName, nodes, notifyChanges: _propertyChanged, interfaces: _interfaces, parent: _parent);
                 return true;
             }
         }

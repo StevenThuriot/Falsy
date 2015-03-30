@@ -1034,5 +1034,40 @@ namespace Falsy.Tests
             Assert.AreEqual(28, person.Age);
             Assert.AreEqual(6, count);
 	    }
+
+
+
+	    [TestMethod]
+	    public void FalsyCanInheritTypes()
+        {
+            NET.Falsy
+               .Define
+               .InheritFrom(typeof(Parent))
+               .NotifyChanges()
+               .ChildWhoNotifiesChanges();
+
+            var child = NET.Falsy.New.ChildWhoNotifiesChanges();
+	        
+            Assert.IsNotNull((object) child);
+            Assert.IsTrue(child is INotifyPropertyChanged);
+            Assert.IsTrue(child is Parent);
+
+            var notify = (INotifyPropertyChanged)child;
+
+            var count = 0;
+            var handler = new PropertyChangedEventHandler(delegate { count++; });
+            notify.PropertyChanged += handler;
+
+	        Parent parent = child;
+	        parent.ImAVirtualGetterSetter = 3;
+            Assert.AreEqual(Parent.ImAVirtualGetterValue, parent.ImAVirtualGetter);
+	        parent.ImAVirtualSetter = 21;
+	        parent.ImANormalGetterSetter = 54;
+
+            notify.PropertyChanged -= handler;
+            Assert.AreEqual(2, count);
+            Assert.AreEqual(21, parent.Test3_Field);
+            Assert.AreEqual(54, parent.ImANormalGetterSetter);
+        }
     }
 }
