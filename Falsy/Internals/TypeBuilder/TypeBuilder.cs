@@ -1,4 +1,4 @@
-﻿#region License
+﻿﻿#region License
 
 //  
 // Copyright 2015 Steven Thuriot
@@ -18,13 +18,13 @@
 
 #endregion
 
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Runtime.InteropServices;
 using System.Threading;
 using Horizon;
 using TypeInfo = Horizon.TypeInfo;
@@ -226,14 +226,15 @@ namespace Falsy.NET.Internals.TypeBuilder
                 if (propertySetter == null) continue;
                 if (!propertySetter.IsVirtual) continue;
 
-                var pb = typeBuilder.DefineProperty(propertyInfo.Name, PropertyAttributes.None, propertyInfo.PropertyType, Type.EmptyTypes);
+                var name = propertyInfo.Name;
+                var pb = typeBuilder.DefineProperty(name, PropertyAttributes.None, propertyInfo.PropertyType, Type.EmptyTypes);
 
                 ILGenerator generator;
 
                 var propertyGetter = propertyInfo.GetGetMethod();
                 if (propertyGetter != null)
                 {
-                    var getMethod = typeBuilder.DefineMethod("get_" + propertyInfo.Name, VirtGetSetAttr, propertyInfo.PropertyType, Type.EmptyTypes);
+                    var getMethod = typeBuilder.DefineMethod("get_" + name, VirtGetSetAttr, propertyInfo.PropertyType, Type.EmptyTypes);
                     generator = getMethod.GetILGenerator();
                     generator.Emit(OpCodes.Ldarg_0);
                     generator.Emit(OpCodes.Call, propertyGetter);
@@ -243,16 +244,28 @@ namespace Falsy.NET.Internals.TypeBuilder
                 }
                 
                 
-                var setMethod = typeBuilder.DefineMethod("set_" + propertyInfo.Name, VirtGetSetAttr, null, new[] {propertyInfo.PropertyType});
+                var setMethod = typeBuilder.DefineMethod("set_" + name, VirtGetSetAttr, null, new[] {propertyInfo.PropertyType});
 
-                //TODO: Check if property has changed compared to base? --> Requires an extra method call :(
                 generator = setMethod.GetILGenerator();
                 generator.Emit(OpCodes.Ldarg_0);
+
+                if (propertyGetter != null)
+                {
+                    generator.Emit(OpCodes.Call, propertyGetter);
+                    generator.Emit(OpCodes.Ldarg_1);
+                    var setValueLabel = generator.DefineLabel();
+                    generator.Emit(OpCodes.Bne_Un_S, setValueLabel);
+                    generator.Emit(OpCodes.Ret);
+                    generator.MarkLabel(setValueLabel);
+                    generator.Emit(OpCodes.Ldarg_0);
+                }
+
                 generator.Emit(OpCodes.Ldarg_1);
                 generator.Emit(OpCodes.Call, propertySetter);
                 generator.Emit(OpCodes.Ldarg_0);
-                generator.Emit(OpCodes.Ldstr, propertyInfo.Name);
+                generator.Emit(OpCodes.Ldstr, name);
                 generator.Emit(OpCodes.Call, raiseEvent);
+
                 generator.Emit(OpCodes.Ret);
 
                 pb.SetSetMethod(setMethod);

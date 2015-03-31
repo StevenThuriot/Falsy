@@ -1,4 +1,4 @@
-﻿#region License
+﻿﻿#region License
 
 //  
 // Copyright 2015 Steven Thuriot
@@ -1059,13 +1059,64 @@ namespace Falsy.Tests
             notify.PropertyChanged += handler;
 
 	        Parent parent = child;
-	        parent.ImAVirtualGetterSetter = 3;
             Assert.AreEqual(Parent.ImAVirtualGetterValue, parent.ImAVirtualGetter);
-	        parent.ImAVirtualSetter = 21;
-	        parent.ImANormalGetterSetter = 54;
+
+	        parent.ImAVirtualGetterSetter = 3; //1
+	        
+            parent.ImAVirtualSetter = 21; //2
+	        
+            parent.ImANormalGetterSetter = 54; //Still 2, since not virtual
 
             notify.PropertyChanged -= handler;
+
             Assert.AreEqual(2, count);
+            Assert.AreEqual(21, parent.Test3_Field);
+            Assert.AreEqual(54, parent.ImANormalGetterSetter);
+        }
+
+	    [TestMethod]
+	    public void InheritedTypesCanNotifySmart()
+        {
+            NET.Falsy
+               .Define
+               .InheritFrom(typeof(Parent))
+               .NotifyChanges()
+               .ChildWhoNotifiesChangesSmart();
+
+            var child = NET.Falsy.New.ChildWhoNotifiesChangesSmart();
+	        
+            Assert.IsNotNull((object) child);
+            Assert.IsTrue(child is INotifyPropertyChanged);
+            Assert.IsTrue(child is Parent);
+
+            var notify = (INotifyPropertyChanged)child;
+
+            var count = 0;
+            var handler = new PropertyChangedEventHandler(delegate { count++; });
+            notify.PropertyChanged += handler;
+
+	        Parent parent = child;
+            Assert.AreEqual(Parent.ImAVirtualGetterValue, parent.ImAVirtualGetter);
+
+	        parent.ImAVirtualGetterSetter = 3; //1
+	        parent.ImAVirtualGetterSetter = 3; //1
+	        parent.ImAVirtualGetterSetter = 3; //1
+	        parent.ImAVirtualGetterSetter = 5; //2
+	        parent.ImAVirtualGetterSetter = 5; //2
+	        parent.ImAVirtualGetterSetter = 3; //3
+	        
+            parent.ImAVirtualSetter = 21; //4
+            parent.ImAVirtualSetter = 21; //5   Since this doesn't have a getter, we can't check the previous value.
+            parent.ImAVirtualSetter = 21; //6
+	        
+            parent.ImANormalGetterSetter = 54; //Still 6, since not virtual
+            parent.ImANormalGetterSetter = 54; //Still 6, since not virtual
+            parent.ImANormalGetterSetter = 55; //Still 6, since not virtual
+            parent.ImANormalGetterSetter = 54; //Still 6, since not virtual
+
+            notify.PropertyChanged -= handler;
+
+            Assert.AreEqual(6, count);
             Assert.AreEqual(21, parent.Test3_Field);
             Assert.AreEqual(54, parent.ImANormalGetterSetter);
         }
