@@ -1,27 +1,9 @@
-﻿#region License
-
-//  
-// Copyright 2015 Steven Thuriot
-//  
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-// 
-//    http://www.apache.org/licenses/LICENSE-2.0
-// 
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// 
-
-#endregion
-
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Dynamic;
 using System.Linq;
+using Horizon;
 
 namespace Falsy.NET.Internals.TypeBuilder
 {
@@ -78,18 +60,15 @@ namespace Falsy.NET.Internals.TypeBuilder
         public class DefineTypeFactory : TypeFactory
         {
             private HashSet<Type> _interfaces;
-            private bool _propertyChanged;
             private Type _parent;
 
             internal DefineTypeFactory() { }
 
             public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
             {
-                var cmp = StringComparer.OrdinalIgnoreCase;
+                var binderName = binder.Name.ToUpperInvariant();
 
-                var binderName = binder.Name;
-
-                if (cmp.Equals("WITHINTERFACE", binderName))
+                if ("WITHINTERFACE" == binderName)
                 {
                     var types = args.Cast<Type>();
 
@@ -108,15 +87,27 @@ namespace Falsy.NET.Internals.TypeBuilder
                     return true;
                 }
 
-                if (cmp.Equals("NOTIFYCHANGES", binderName))
+                if ("NOTIFYCHANGES" == binderName)
                 {
-                    _propertyChanged = true;
+                    var propertyChangedInterface = Constants.Typed<INotifyPropertyChanged>.OwnerType;
+
+                    if (_interfaces == null)
+                    {
+                        _interfaces = new HashSet<Type>
+                                      {
+                                          propertyChangedInterface
+                                      };
+                    }
+                    else
+                    {
+                        _interfaces.Add(propertyChangedInterface);
+                    }
 
                     result = this;
                     return true;
                 }
 
-                if (cmp.Equals("INHERITFROM", binderName))
+                if ("INHERITFROM" == binderName)
                 {
                     if (args.Length != 1)
                         throw new NotSupportedException("You can only have 1 parent.");
@@ -128,7 +119,7 @@ namespace Falsy.NET.Internals.TypeBuilder
                 }
 
                 var nodes = CreateNodes(binder.CallInfo, args, objectsAreValues: false);
-                result = TypeBuilder.CreateType(binderName, nodes, notifyChanges: _propertyChanged, interfaces: _interfaces, parent: _parent);
+                result = TypeBuilder.CreateType(binder.Name, nodes, interfaces: _interfaces, parent: _parent);
                 return true;
             }
         }

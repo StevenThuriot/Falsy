@@ -1,25 +1,4 @@
-﻿﻿#region License
-
-//  
-// Copyright 2015 Steven Thuriot
-//  
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-// 
-//    http://www.apache.org/licenses/LICENSE-2.0
-// 
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// 
-
-#endregion
-
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -85,8 +64,7 @@ namespace Falsy.NET.Internals.TypeBuilder
             return instance;
         }
 
-        internal static Type CreateType(string typeName, IReadOnlyList<DynamicMember> nodes, bool notifyChanges = false,
-                                        Type parent = null, IEnumerable<Type> interfaces = null)
+        internal static Type CreateType(string typeName, IReadOnlyList<DynamicMember> nodes, Type parent = null, IEnumerable<Type> interfaces = null)
         {
             Type type;
             if (_typeCache.TryGetValue(typeName, out type))
@@ -109,22 +87,41 @@ namespace Falsy.NET.Internals.TypeBuilder
                 members = nodes.Where(x => !names.Contains(x.Name)).ToList();
             }
 
+            var notifyChanges = false;
+            MethodBuilder raisePropertyChanged = null;
+
             if (interfaces != null)
             {
                 foreach (var @interface in interfaces)
                 {
                     typeBuilder.AddInterfaceImplementation(@interface);
-
+                    
                     var properties = @interface.GetProperties().Select(x => new DynamicMember(x, true));
                     members = members.Union(properties).ToList();
+
+
+                    var events = @interface.GetEvents();
+
+                    if (!notifyChanges &&
+                        (notifyChanges = Constants.Typed<INotifyPropertyChanged>.OwnerType.IsAssignableFrom(@interface)))
+                    {
+                        foreach (var @event in events)
+                        {
+                            var tuple = GenerateEvent(typeBuilder, @event);
+                            if (@event.Name != "PropertyChanged") continue;
+
+                            var eventBuilder = tuple.Item1;
+                            var eventBackingField = tuple.Item2;
+
+                            raisePropertyChanged = BuildOnPropertyChanged(typeBuilder, eventBuilder, eventBackingField);
+                        }
+                    }
+                    else
+                    {
+                        foreach (var @event in events)
+                            GenerateEvent(typeBuilder, @event);
+                    }
                 }
-            }
-            
-            MethodBuilder raiseEvent = null;
-            if (notifyChanges)
-            {
-                typeBuilder.AddInterfaceImplementation(Constants.Typed<INotifyPropertyChanged>.OwnerType);
-                raiseEvent = GenerateINotifyPropertyChangedEvent(typeBuilder);
             }
 
             foreach (var node in members)
@@ -194,7 +191,7 @@ namespace Falsy.NET.Internals.TypeBuilder
                     {
                         setIL.Emit(OpCodes.Ldarg_0);
                         setIL.Emit(OpCodes.Ldstr, memberName);
-                        setIL.Emit(OpCodes.Call, raiseEvent);
+                        setIL.Emit(OpCodes.Call, raisePropertyChanged);
                     }
 
                     setIL.Emit(OpCodes.Ret);
@@ -210,12 +207,40 @@ namespace Falsy.NET.Internals.TypeBuilder
 
             if (parent != null)
             {
-                if (raiseEvent != null) OverrideParentPropertiesForPropertyChanged(typeBuilder, parent, raiseEvent);
+                if (raisePropertyChanged != null) OverrideParentPropertiesForPropertyChanged(typeBuilder, parent, raisePropertyChanged);
                 //TODO: Check if parent is abstract and properties need to be implemented.
             }
             // Generate our type and cache it.
             _typeCache[typeName] = type = typeBuilder.CreateType();
             return type;
+        }
+
+        private static MethodBuilder BuildOnPropertyChanged(System.Reflection.Emit.TypeBuilder typeBuilder, EventBuilder eventBuilder, FieldInfo eventBackingField)
+        {
+            var raisePropertyChanged = typeBuilder.DefineMethod("OnPropertyChanged", MethodAttributes.Private, Constants.VoidType, new[] {Constants.StringType});
+            var generator = raisePropertyChanged.GetILGenerator();
+            var returnLabel = generator.DefineLabel();
+
+            generator.DeclareLocal(Constants.Typed<PropertyChangedEventHandler>.OwnerType);
+            generator.Emit(OpCodes.Ldarg_0);
+            generator.Emit(OpCodes.Ldfld, eventBackingField);
+            generator.Emit(OpCodes.Stloc_0);
+            generator.Emit(OpCodes.Ldloc_0);
+            generator.Emit(OpCodes.Ldnull);
+            generator.Emit(OpCodes.Ceq);
+            generator.Emit(OpCodes.Brtrue, returnLabel);
+
+            generator.Emit(OpCodes.Ldloc_0);
+            generator.Emit(OpCodes.Ldarg_0);
+            generator.Emit(OpCodes.Ldarg_1);
+            generator.Emit(OpCodes.Newobj, _createEventArgs.Value);
+            generator.Emit(OpCodes.Callvirt, _invokeDelegate.Value);
+
+            generator.MarkLabel(returnLabel);
+            generator.Emit(OpCodes.Ret);
+
+            eventBuilder.SetRaiseMethod(raisePropertyChanged);
+            return raisePropertyChanged;
         }
 
         private static void OverrideParentPropertiesForPropertyChanged(System.Reflection.Emit.TypeBuilder typeBuilder, IReflect parent, MethodInfo raiseEvent)
@@ -277,81 +302,59 @@ namespace Falsy.NET.Internals.TypeBuilder
         private static readonly Lazy<MethodInfo> _delegateRemove = new Lazy<MethodInfo>(() => Constants.Typed<Delegate>.OwnerType.GetMethod("Remove", new[] { Constants.Typed<Delegate>.OwnerType, Constants.Typed<Delegate>.OwnerType }));
         private static readonly Lazy<MethodInfo> _invokeDelegate = new Lazy<MethodInfo>(() => Constants.Typed<PropertyChangedEventHandler>.OwnerType.GetMethod("Invoke"));
         private static readonly Lazy<ConstructorInfo> _createEventArgs = new Lazy<ConstructorInfo>(() => Constants.Typed<PropertyChangingEventArgs>.OwnerType.GetConstructor(new[] { Constants.StringType }));
-        
-        private static MethodBuilder GenerateINotifyPropertyChangedEvent(System.Reflection.Emit.TypeBuilder typeBuilder)
+
+
+        private static Tuple<EventBuilder, FieldBuilder> GenerateEvent(System.Reflection.Emit.TypeBuilder typeBuilder, EventInfo @event)
         {
-            var propertyChangedEventHandlerType = Constants.Typed<PropertyChangedEventHandler>.OwnerType;
-            var eventBack = typeBuilder.DefineField("m_PropertyChanged", propertyChangedEventHandlerType, FieldAttributes.Private);
-            var stringTypes = new[] { Constants.StringType };
+            var eventName = @event.Name;
+            var eventHandlerType = @event.EventHandlerType;
+            var eventHandlerTypes = new[] { eventHandlerType };
 
-            var propertyChangedEventHandlerTypes = new[] {propertyChangedEventHandlerType};
-
+            var eventBackingField = typeBuilder.DefineField("m_" + eventName, eventHandlerType, FieldAttributes.Private);
 
             //Combine event
-            var addPropertyChanged = typeBuilder.DefineMethod("add_PropertyChanged",
-                                                              VirtGetSetAttr |
-                                                              MethodAttributes.Final |
-                                                              MethodAttributes.NewSlot,
-                                                              Constants.VoidType,
-                                                              propertyChangedEventHandlerTypes);
-            var generator = addPropertyChanged.GetILGenerator();
+            var add = typeBuilder.DefineMethod("add_" + eventName,
+                                               VirtGetSetAttr |
+                                               MethodAttributes.Final |
+                                               MethodAttributes.NewSlot,
+                                               Constants.VoidType,
+                                               eventHandlerTypes);
+
+            var generator = add.GetILGenerator();
             generator.Emit(OpCodes.Ldarg_0);
             generator.Emit(OpCodes.Ldarg_0);
-            generator.Emit(OpCodes.Ldfld, eventBack);
+            generator.Emit(OpCodes.Ldfld, eventBackingField);
             generator.Emit(OpCodes.Ldarg_1);
             generator.Emit(OpCodes.Call, _delegateCombine.Value);
-            generator.Emit(OpCodes.Castclass, propertyChangedEventHandlerType);
-            generator.Emit(OpCodes.Stfld, eventBack);
+            generator.Emit(OpCodes.Castclass, eventHandlerType);
+            generator.Emit(OpCodes.Stfld, eventBackingField);
             generator.Emit(OpCodes.Ret);
 
-            
-            
             //Remove event
-            var removePropertyChanged = typeBuilder.DefineMethod("remove_PropertyChanged",
-                                                                 VirtGetSetAttr |
-                                                                 MethodAttributes.Final |
-                                                                 MethodAttributes.NewSlot,
-                                                                 Constants.VoidType,
-                                                                 propertyChangedEventHandlerTypes);
-            generator = removePropertyChanged.GetILGenerator();
+            var remove = typeBuilder.DefineMethod("remove_" + eventName,
+                                                  VirtGetSetAttr |
+                                                  MethodAttributes.Final |
+                                                  MethodAttributes.NewSlot,
+                                                  Constants.VoidType,
+                                                  eventHandlerTypes);
+
+            generator = remove.GetILGenerator();
             generator.Emit(OpCodes.Ldarg_0);
             generator.Emit(OpCodes.Ldarg_0);
-            generator.Emit(OpCodes.Ldfld, eventBack);
+            generator.Emit(OpCodes.Ldfld, eventBackingField);
             generator.Emit(OpCodes.Ldarg_1);
             generator.Emit(OpCodes.Call, _delegateRemove.Value);
-            generator.Emit(OpCodes.Castclass, propertyChangedEventHandlerType);
-            generator.Emit(OpCodes.Stfld, eventBack);
+            generator.Emit(OpCodes.Castclass, eventHandlerType);
+            generator.Emit(OpCodes.Stfld, eventBackingField);
             generator.Emit(OpCodes.Ret);
 
 
+            //event
+            var eventBuilder = typeBuilder.DefineEvent(eventName, EventAttributes.None, eventHandlerType);
+            eventBuilder.SetAddOnMethod(add);
+            eventBuilder.SetRemoveOnMethod(remove);
 
-            //OnPropertyChanged Method
-            var raisePropertyChanged = typeBuilder.DefineMethod("OnPropertyChanged", MethodAttributes.Private, Constants.VoidType, stringTypes);
-            generator = raisePropertyChanged.GetILGenerator();
-            var lblDelegateOk = generator.DefineLabel();
-            generator.DeclareLocal(propertyChangedEventHandlerType);
-            generator.Emit(OpCodes.Ldarg_0);
-            generator.Emit(OpCodes.Ldfld, eventBack);
-            generator.Emit(OpCodes.Stloc_0);
-            generator.Emit(OpCodes.Ldloc_0);
-            generator.Emit(OpCodes.Ldnull);
-            generator.Emit(OpCodes.Ceq);
-            generator.Emit(OpCodes.Brtrue, lblDelegateOk);
-            generator.Emit(OpCodes.Ldloc_0);
-            generator.Emit(OpCodes.Ldarg_0);
-            generator.Emit(OpCodes.Ldarg_1);
-            generator.Emit(OpCodes.Newobj, _createEventArgs.Value);
-            generator.Emit(OpCodes.Callvirt, _invokeDelegate.Value);
-            generator.MarkLabel(lblDelegateOk);
-            generator.Emit(OpCodes.Ret);
-
-            //OnPropertyChanged event
-            var pcevent = typeBuilder.DefineEvent("PropertyChanged", EventAttributes.None, propertyChangedEventHandlerType);
-            pcevent.SetRaiseMethod(raisePropertyChanged);
-            pcevent.SetAddOnMethod(addPropertyChanged);
-            pcevent.SetRemoveOnMethod(removePropertyChanged);
-
-            return raisePropertyChanged;
+            return Tuple.Create(eventBuilder, eventBackingField);
         }
     }
 }
