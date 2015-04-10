@@ -60,8 +60,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Horizon\ConstructorCaller.cs" />
+    <Compile Include="Horizon\EventCaller.cs" />
+    <Compile Include="Horizon\ExtendedTypeInfo.AutoResolve.cs" />
+    <Compile Include="Horizon\ExtendedTypeInfo.cs" />
     <Compile Include="Horizon\ICaller.cs" />
+    <Compile Include="Horizon\IEventCaller.cs" />
     <Compile Include="Horizon\IInternalCaller.cs" />
+    <Compile Include="Horizon\NullCaller.cs" />
     <Compile Include="Internals\DictionaryFalsy.cs" />
     <Compile Include="Internals\DynamicFalsy.cs" />
     <Compile Include="Internals\DynamicFalsy.Generic.cs" />

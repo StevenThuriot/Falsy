@@ -11,11 +11,8 @@ namespace Falsy.NET.Internals
     [TypeConverter(typeof(FalsyTypeConverter))]
 	public class DynamicFalsy<T> : DynamicFalsy
     {
-
-
-        private static readonly Predicate<T> Falsy;
-
-
+        private static readonly Func<T, bool> Falsy;
+        
         protected readonly T _instance;
         protected readonly Lazy<bool> _isFalse;
         protected readonly Lazy<bool> _isFalsyEquivalent;
@@ -27,19 +24,17 @@ namespace Falsy.NET.Internals
 		    get { return Constants.Typed<T>.OwnerType; }
 	    }
 
-        static DynamicFalsy()
+        static DynamicFalsy() //Once per T.
         {
-            Predicate<T> nullCheck = obj => Reference.IsNull(obj);
-
             if (Constants.Typed<T>.OwnerType == Constants.StringType)
             {
-                Falsy = obj => nullCheck(obj) || ((string) (object) obj) == "";
+                Falsy = obj => string.IsNullOrEmpty((string)(object)obj);
             }
             else if (Constants.Typed<T>.OwnerType == Constants.DoubleType)
             {
                 Falsy = obj =>
                         {
-                            if (nullCheck(obj)) return true;
+                            if (Reference.IsNull(obj)) return true;
 
                             var value = (double) (object) obj;
                             return Double.IsNaN(value) || Math.Abs(value) < Double.Epsilon;
@@ -49,7 +44,7 @@ namespace Falsy.NET.Internals
             {
                 Falsy = obj =>
                         {
-                            if (nullCheck(obj)) return true;
+                            if (Reference.IsNull(obj)) return true;
 
                             var value = (float) (object) obj;
                             return Single.IsNaN(value) || Math.Abs(value) < Single.Epsilon;
@@ -57,15 +52,15 @@ namespace Falsy.NET.Internals
             }
             else if (Constants.Typed<T>.OwnerType.IsNumeric())
             {
-                Falsy = obj => nullCheck(obj) || ((int) (object) obj) == 0;
+                Falsy = obj => Reference.IsNull(obj) || 0.Equals(obj);
             }
             else if (Constants.Typed<T>.OwnerType == Constants.BooleanType)
             {
-                Falsy = obj => nullCheck(obj) || ((bool) (object) obj) == false;
+                Falsy = obj => Reference.IsNull(obj) || false.Equals(obj);
             }
             else
             {
-                Falsy = nullCheck;
+                Falsy = obj => Reference.IsNull(obj);
             }
         }
 		
@@ -82,32 +77,25 @@ namespace Falsy.NET.Internals
 
         public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
-            object prop;
+            object member;
 
-            if (TypeInfo<T>.TryGetProperty(_instance, binder.Name, out prop))
+            if (TypeInfo<T>.TryGetProperty(_instance, binder.Name, out member))
             {
-                if (Reference.IsNull(prop))
+                if (Reference.IsNotNull(member))
                 {
-                    result = UndefinedFalsy.Value;
+                    dynamic value = member;
+                    result = NET.Falsy.Falsify(value);
                     return true;
                 }
-
-                dynamic value = prop;
-                result = NET.Falsy.Falsify(value);
-                return true;
             }
-
-            if (TypeInfo<T>.TryGetField(_instance, binder.Name, out prop))
+            else if (TypeInfo<T>.TryGetField(_instance, binder.Name, out member))
             {
-                if (Reference.IsNull(prop))
+                if (Reference.IsNotNull(member))
                 {
-                    result = UndefinedFalsy.Value;
+                    dynamic value = member;
+                    result = NET.Falsy.Falsify(value);
                     return true;
                 }
-
-                dynamic value = prop;
-                result = NET.Falsy.Falsify(value);
-                return true;
             }
 
             result = UndefinedFalsy.Value;

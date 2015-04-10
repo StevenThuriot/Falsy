@@ -20,15 +20,12 @@ namespace Falsy.NET.Internals
 			object output;
 			if (TypeInfo<T>.TryGetIndexer(_instance, indexes, out output))
 			{
-				if (Reference.IsNull(output))
-				{
-					result = UndefinedFalsy.Value;
-					return true;
-				}
-
-				dynamic value = output;
-				result = Falsy.Falsify(value);
-				return true;
+			    if (Reference.IsNotNull(output))
+			    {
+			        dynamic value = output;
+			        result = Falsy.Falsify(value);
+			        return true;
+			    }
 			}
 
 			result = UndefinedFalsy.Value;

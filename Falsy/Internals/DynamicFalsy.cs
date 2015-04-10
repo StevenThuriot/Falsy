@@ -79,11 +79,13 @@ namespace Falsy.NET.Internals
 
         public static bool operator ==(DynamicFalsy falsy1, DynamicFalsy falsy2)
         {
+            // ReSharper disable PossibleNullReferenceException
             if (Reference.IsNull(falsy1))
                 return Reference.IsNull(falsy2) || falsy2.Equals(null);
 
             if (Reference.IsNull(falsy2))
                 return falsy1.Equals(null);
+            // ReSharper restore PossibleNullReferenceException
 
             return Equals(falsy1, falsy2);
         }
@@ -115,21 +117,25 @@ namespace Falsy.NET.Internals
 
         public static bool operator ==(bool value, DynamicFalsy falsy)
         {
+// ReSharper disable once PossibleNullReferenceException
             return Reference.IsNull(falsy) ? value : falsy.Equals(value);
         }
 
         public static bool operator !=(bool value, DynamicFalsy falsy)
         {
+// ReSharper disable once PossibleNullReferenceException
             return !(Reference.IsNull(falsy) ? value : falsy.Equals(value));
         }
 
         public static bool operator ==(DynamicFalsy falsy, bool value)
         {
+// ReSharper disable once PossibleNullReferenceException
             return Reference.IsNull(falsy) ? value : falsy.Equals(value);
         }
 
         public static bool operator !=(DynamicFalsy falsy, bool value)
         {
+// ReSharper disable once PossibleNullReferenceException
             return !(Reference.IsNull(falsy) ? value : falsy.Equals(value));
         }
 
