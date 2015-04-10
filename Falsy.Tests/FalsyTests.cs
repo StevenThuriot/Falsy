@@ -4,6 +4,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using Falsy.NET;
+using Horizon;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -1099,6 +1100,36 @@ namespace Falsy.Tests
             Assert.AreEqual(6, count);
             Assert.AreEqual(21, parent.Test3_Field);
             Assert.AreEqual(54, parent.ImANormalGetterSetter);
+        }
+
+
+        [TestMethod]
+	    public void FalsyCanHandleEvents()
+        {
+            NET.Falsy
+               .Define
+               .WithInterface(typeof(IPerson))
+               .NotifyChanges()
+               .NotifyablePerson();
+
+            IPerson person = NET.Falsy.New.NotifyablePerson();
+
+            var count = 0;
+            var handler = new PropertyChangedEventHandler(delegate { count++; });
+            
+            IEventCaller caller = TypeInfo.GetEvent((dynamic) person, "PropertyChanged");
+            
+            caller.Add(person, handler);
+
+            person.FirstName = "Steven";
+
+            caller.Raise(person, "Test");
+            
+            caller.Remove(person, handler);
+
+            person.FirstName = "Not Steven";
+
+            Assert.AreEqual(2, count);
         }
     }
 }
