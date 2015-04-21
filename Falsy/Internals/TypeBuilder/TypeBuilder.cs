@@ -81,7 +81,7 @@ namespace Falsy.NET.Internals.TypeBuilder
             else
             {
                 typeBuilder.SetParent(parent);
-                var properties = parent.GetProperties();
+                var properties = parent.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy);
                 var fields = parent.GetFields();
                 var names = properties.Select(x => x.Name).Union(fields.Select(x => x.Name)).ToList();
                 members = nodes.Where(x => !names.Contains(x.Name)).ToList();
@@ -92,10 +92,15 @@ namespace Falsy.NET.Internals.TypeBuilder
 
             if (interfaces != null)
             {
-                foreach (var @interface in interfaces)
+                var interfaceSet = new HashSet<Type>();
+                
+                foreach (var @interface in interfaces.Where(interfaceSet.Add).SelectMany(x => x.GetInterfaces()))
+                    interfaceSet.Add(@interface);
+
+                foreach (var @interface in interfaceSet)
                 {
                     typeBuilder.AddInterfaceImplementation(@interface);
-                    
+
                     var properties = @interface.GetProperties().Select(x => new DynamicMember(x, true));
                     members = members.Union(properties).ToList();
 
@@ -249,7 +254,7 @@ namespace Falsy.NET.Internals.TypeBuilder
 
         private static void OverrideParentPropertiesForPropertyChanged(System.Reflection.Emit.TypeBuilder typeBuilder, IReflect parent, MethodInfo raiseEvent)
         {
-            foreach (var propertyInfo in parent.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            foreach (var propertyInfo in parent.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy))
             {
                 var propertySetter = propertyInfo.GetSetMethod();
                 if (propertySetter == null) continue;

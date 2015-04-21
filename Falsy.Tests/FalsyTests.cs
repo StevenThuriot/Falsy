@@ -1131,5 +1131,23 @@ namespace Falsy.Tests
 
             Assert.AreEqual(2, count);
         }
+
+        [TestMethod]
+        public void FalsyCanImplementInterfaceMethods()
+        {
+            NET.Falsy
+               .Define
+               .WithInterface(typeof(IPersonWithMethods))
+               .PersonWithMethods();
+
+            var instance = NET.Falsy.New.PersonWithMethods();
+            Assert.IsTrue(instance is IPerson);
+            Assert.IsTrue(instance is IPersonWithMethods);
+
+            IPersonWithMethods person = instance;
+            var result = person.ThisIsAMethod();
+
+            Assert.AreEqual(0, result);
+        }
     }
 }

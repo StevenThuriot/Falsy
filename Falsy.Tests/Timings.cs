@@ -12,8 +12,8 @@ namespace Falsy.Tests
     {
         public static void Main()
         {
-            const double interval = 150d;
-            const double threshold = 0.02d;
+            const double interval = 200d;
+            const double threshold = 0.025d;
             
             RunTimings<FalsyTests>(interval, threshold);
         }
