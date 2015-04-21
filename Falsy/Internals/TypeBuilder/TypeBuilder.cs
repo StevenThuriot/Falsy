@@ -121,6 +121,10 @@ namespace Falsy.NET.Internals.TypeBuilder
                         foreach (var @event in events)
                             GenerateEvent(typeBuilder, @event);
                     }
+
+
+                    foreach (var method in @interface.GetMethods().Where(x => !x.IsSpecialName))
+                        GenerateMethod(typeBuilder, method);
                 }
             }
 
@@ -143,7 +147,7 @@ namespace Falsy.NET.Internals.TypeBuilder
                     fieldAttributes = FieldAttributes.Public;
                 }
 
-                // Generate a private field
+                // Generate a field
                 var field = typeBuilder.DefineField(fieldName, memberType, fieldAttributes);
 
                 if (isProperty)
@@ -153,7 +157,6 @@ namespace Falsy.NET.Internals.TypeBuilder
                     // Define the property getter method for our private field.
                     var getBuilder = typeBuilder.DefineMethod("get_" + memberName, methodAttributes, memberType, Type.EmptyTypes);
 
-                    // Hard IL stuff
                     var getIL = getBuilder.GetILGenerator();
                     getIL.Emit(OpCodes.Ldarg_0);
                     getIL.Emit(OpCodes.Ldfld, field);
@@ -164,7 +167,6 @@ namespace Falsy.NET.Internals.TypeBuilder
                     // Define the property setter method for our private field.
                     var setBuilder = typeBuilder.DefineMethod("set_" + memberName, methodAttributes, null, parameterTypes);
 
-                    // Hard IL stuff
                     var setIL = setBuilder.GetILGenerator();
 
                     setIL.Emit(OpCodes.Ldarg_0);
@@ -205,11 +207,13 @@ namespace Falsy.NET.Internals.TypeBuilder
                 }
             }
 
+
             if (parent != null)
             {
                 if (raisePropertyChanged != null) OverrideParentPropertiesForPropertyChanged(typeBuilder, parent, raisePropertyChanged);
                 //TODO: Check if parent is abstract and properties need to be implemented.
             }
+
             // Generate our type and cache it.
             _typeCache[typeName] = type = typeBuilder.CreateType();
             return type;
@@ -303,6 +307,57 @@ namespace Falsy.NET.Internals.TypeBuilder
         private static readonly Lazy<MethodInfo> _invokeDelegate = new Lazy<MethodInfo>(() => Constants.Typed<PropertyChangedEventHandler>.OwnerType.GetMethod("Invoke"));
         private static readonly Lazy<ConstructorInfo> _createEventArgs = new Lazy<ConstructorInfo>(() => Constants.Typed<PropertyChangingEventArgs>.OwnerType.GetConstructor(new[] { Constants.StringType }));
 
+
+        private static void GenerateMethod(System.Reflection.Emit.TypeBuilder typeBuilder, MethodInfo methodInfo, Delegate call = null)
+        {
+            var name = methodInfo.Name;
+            var returnType = methodInfo.ReturnType;
+            var parameterTypes = methodInfo.GetParameters().Select(x => x.ParameterType).ToArray();
+
+            var methodBuilder = typeBuilder.DefineMethod(name,
+                                                         MethodAttributes.Public | MethodAttributes.Final |
+                                                         MethodAttributes.HideBySig | MethodAttributes.NewSlot |
+                                                         MethodAttributes.Virtual,
+                                                         returnType,
+                                                         parameterTypes);
+
+
+            var generator = methodBuilder.GetILGenerator();
+
+            if (call != null)
+            {
+                for (var i = 1; i <= parameterTypes.Length; i++)
+                    generator.Emit(OpCodes.Ldarg_S, i);
+
+                generator.Emit(OpCodes.Call, call.Method);
+            }
+            else if (returnType != typeof (void))
+            {
+                if (!returnType.IsValueType)
+                {
+                    generator.Emit(OpCodes.Ldnull);
+                }
+                else if (returnType.IsPrimitive)
+                {
+                    generator.Emit(OpCodes.Ldc_I4_0);
+
+                    //Do we need to manually convert? Seems to work on its own!
+                    //var size = System.Runtime.InteropServices.Marshal.SizeOf(returnType);
+                    //if (size == 8)
+                    //    generator.Emit(OpCodes.Conv_I8);
+                }
+                else
+                {
+
+                    var local = generator.DeclareLocal(returnType);
+                    generator.Emit(OpCodes.Ldloca_S, local);
+                    generator.Emit(OpCodes.Initobj, returnType);
+                    generator.Emit(OpCodes.Ldloc_0);
+                }
+            }
+
+            generator.Emit(OpCodes.Ret);
+        }
 
         private static Tuple<EventBuilder, FieldBuilder> GenerateEvent(System.Reflection.Emit.TypeBuilder typeBuilder, EventInfo @event)
         {
