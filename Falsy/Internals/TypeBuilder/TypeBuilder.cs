@@ -108,7 +108,7 @@ namespace Falsy.NET.Internals.TypeBuilder
                     }
 
 
-                    foreach (var method in TypeInfo.Extended.Methods(@interface).Cast<IMethodCaller>())
+                    foreach (var method in TypeInfo.Extended.Methods(@interface))
                         GenerateMethod(typeBuilder, method);
                 }
             }
@@ -234,7 +234,7 @@ namespace Falsy.NET.Internals.TypeBuilder
 
         private static void OverrideParentPropertiesForPropertyChanged(System.Reflection.Emit.TypeBuilder typeBuilder, Type parent, MethodInfo raiseEvent)
         {
-            foreach (var propertyInfo in TypeInfo.Extended.Properties(parent).Cast<IPropertyCaller>())
+            foreach (var propertyInfo in TypeInfo.Extended.Properties(parent))
             {
                 var propertySetter = propertyInfo.GetSetMethod();
                 if (propertySetter == null) continue;
