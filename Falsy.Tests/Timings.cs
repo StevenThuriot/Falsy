@@ -15,6 +15,11 @@ namespace Falsy.Tests
             const double interval = 200d;
             const double threshold = 0.025d;
             
+            var currentProcess = Process.GetCurrentProcess();
+
+            currentProcess.PriorityBoostEnabled = true;
+            currentProcess.PriorityClass = ProcessPriorityClass.AboveNormal;
+
             RunTimings<FalsyTests>(interval, threshold);
         }
 
