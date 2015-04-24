@@ -65,8 +65,12 @@
     <Compile Include="Horizon\ExtendedTypeInfo.cs" />
     <Compile Include="Horizon\ICaller.cs" />
     <Compile Include="Horizon\IEventCaller.cs" />
-    <Compile Include="Horizon\IInternalCaller.cs" />
+    <Compile Include="Horizon\IMethodCaller.cs" />
+    <Compile Include="Horizon\IMemberCaller.cs" />
+    <Compile Include="Horizon\IPropertyCaller.cs" />
+    <Compile Include="Horizon\MemberCaller.cs" />
     <Compile Include="Horizon\NullCaller.cs" />
+    <Compile Include="Horizon\PropertyCaller.cs" />
     <Compile Include="Internals\DictionaryFalsy.cs" />
     <Compile Include="Internals\DynamicFalsy.cs" />
     <Compile Include="Internals\DynamicFalsy.Generic.cs" />
