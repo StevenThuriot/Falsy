@@ -10,32 +10,10 @@ using TypeInfo = Horizon.TypeInfo;
 
 namespace Falsy.NET.Internals.TypeBuilder
 {
-    /*
-     * Goal:
-               
-     Falsy.Define
-          .WithInterface(type) //Optional
-          .Person(
-              FirstName: typeof(string),
-              LastName: typeof(string),
-              Age: new DynamicMember("Age", isProperty: false), //For special cases with extra configuration options
-           );
-     
-     Falsy.New
-          .Person(                      //If person does not exist, build it from the passed properties?
-               FirstName: "Steven",     //DynamicMember.Create("FirstName", "Steven", isProperty: true)
-               LastName: "Thuriot",
-               Age: 28
-           );
-
-     */
-
     class TypeBuilder
     {
-        private const MethodAttributes GetSetAttr =
-            MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName;
-
-        private const MethodAttributes VirtGetSetAttr = GetSetAttr | MethodAttributes.Virtual;
+        private const MethodAttributes PublicProperty = MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName;
+        private const MethodAttributes VirtPublicProperty = PublicProperty | MethodAttributes.Virtual;
 
         private static readonly Dictionary<string, Type> _typeCache = new Dictionary<string, Type>();
         private static readonly ModuleBuilder _falsyModule;
@@ -48,8 +26,7 @@ namespace Falsy.NET.Internals.TypeBuilder
             _falsyModule = assemblyBuilder.DefineDynamicModule("FalsyModule_" + guid);
         }
 
-        internal static dynamic CreateTypeInstance(string typeName, IReadOnlyList<DynamicMember> nodes,
-                                                   Type parent = null)
+        internal static dynamic CreateTypeInstance(string typeName, IReadOnlyList<DynamicMember> nodes, Type parent = null)
         {
             Type type;
             if (!_typeCache.TryGetValue(typeName, out type))
@@ -81,8 +58,11 @@ namespace Falsy.NET.Internals.TypeBuilder
             else
             {
                 typeBuilder.SetParent(parent);
-                var properties = parent.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy);
-                var fields = parent.GetFields();
+
+
+                var properties = TypeInfo.Extended.Properties(parent);
+                var fields = TypeInfo.Extended.Fields(parent);
+
                 var names = properties.Select(x => x.Name).Union(fields.Select(x => x.Name)).ToList();
                 members = nodes.Where(x => !names.Contains(x.Name)).ToList();
             }
@@ -101,11 +81,11 @@ namespace Falsy.NET.Internals.TypeBuilder
                 {
                     typeBuilder.AddInterfaceImplementation(@interface);
 
-                    var properties = @interface.GetProperties().Select(x => new DynamicMember(x, true));
+                    var properties = TypeInfo.Extended.Properties(@interface).Select(x => new DynamicMember(x, true));
                     members = members.Union(properties).ToList();
 
 
-                    var events = @interface.GetEvents();
+                    var events = TypeInfo.Extended.Events(@interface);
 
                     if (!notifyChanges &&
                         (notifyChanges = Constants.Typed<INotifyPropertyChanged>.OwnerType.IsAssignableFrom(@interface)))
@@ -128,7 +108,7 @@ namespace Falsy.NET.Internals.TypeBuilder
                     }
 
 
-                    foreach (var method in @interface.GetMethods().Where(x => !x.IsSpecialName))
+                    foreach (var method in TypeInfo.Extended.Methods(@interface).Cast<IMethodCaller>())
                         GenerateMethod(typeBuilder, method);
                 }
             }
@@ -157,7 +137,7 @@ namespace Falsy.NET.Internals.TypeBuilder
 
                 if (isProperty)
                 {
-                    var methodAttributes = node.IsVirtual ? VirtGetSetAttr : GetSetAttr;
+                    var methodAttributes = node.IsVirtual ? VirtPublicProperty : PublicProperty;
 
                     // Define the property getter method for our private field.
                     var getBuilder = typeBuilder.DefineMethod("get_" + memberName, methodAttributes, memberType, Type.EmptyTypes);
@@ -252,23 +232,23 @@ namespace Falsy.NET.Internals.TypeBuilder
             return raisePropertyChanged;
         }
 
-        private static void OverrideParentPropertiesForPropertyChanged(System.Reflection.Emit.TypeBuilder typeBuilder, IReflect parent, MethodInfo raiseEvent)
+        private static void OverrideParentPropertiesForPropertyChanged(System.Reflection.Emit.TypeBuilder typeBuilder, Type parent, MethodInfo raiseEvent)
         {
-            foreach (var propertyInfo in parent.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy))
+            foreach (var propertyInfo in TypeInfo.Extended.Properties(parent).Cast<IPropertyCaller>())
             {
                 var propertySetter = propertyInfo.GetSetMethod();
                 if (propertySetter == null) continue;
                 if (!propertySetter.IsVirtual) continue;
 
                 var name = propertyInfo.Name;
-                var pb = typeBuilder.DefineProperty(name, PropertyAttributes.None, propertyInfo.PropertyType, Type.EmptyTypes);
+                var pb = typeBuilder.DefineProperty(name, PropertyAttributes.None, propertyInfo.MemberType, Type.EmptyTypes);
 
                 ILGenerator generator;
 
                 var propertyGetter = propertyInfo.GetGetMethod();
                 if (propertyGetter != null)
                 {
-                    var getMethod = typeBuilder.DefineMethod("get_" + name, VirtGetSetAttr, propertyInfo.PropertyType, Type.EmptyTypes);
+                    var getMethod = typeBuilder.DefineMethod("get_" + name, VirtPublicProperty, propertyInfo.MemberType, Type.EmptyTypes);
                     generator = getMethod.GetILGenerator();
                     generator.Emit(OpCodes.Ldarg_0);
                     generator.Emit(OpCodes.Call, propertyGetter);
@@ -278,7 +258,7 @@ namespace Falsy.NET.Internals.TypeBuilder
                 }
                 
                 
-                var setMethod = typeBuilder.DefineMethod("set_" + name, VirtGetSetAttr, null, new[] {propertyInfo.PropertyType});
+                var setMethod = typeBuilder.DefineMethod("set_" + name, VirtPublicProperty, null, new[] {propertyInfo.MemberType});
 
                 generator = setMethod.GetILGenerator();
                 generator.Emit(OpCodes.Ldarg_0);
@@ -313,11 +293,11 @@ namespace Falsy.NET.Internals.TypeBuilder
         private static readonly Lazy<ConstructorInfo> _createEventArgs = new Lazy<ConstructorInfo>(() => Constants.Typed<PropertyChangingEventArgs>.OwnerType.GetConstructor(new[] { Constants.StringType }));
 
 
-        private static void GenerateMethod(System.Reflection.Emit.TypeBuilder typeBuilder, MethodInfo methodInfo, Delegate call = null)
+        private static void GenerateMethod(System.Reflection.Emit.TypeBuilder typeBuilder, IMethodCaller methodInfo, Delegate call = null)
         {
             var name = methodInfo.Name;
             var returnType = methodInfo.ReturnType;
-            var parameterTypes = methodInfo.GetParameters().Select(x => x.ParameterType).ToArray();
+            var parameterTypes = methodInfo.ParameterTypes.Select(x => x.ParameterType).ToArray();
 
             var methodBuilder = typeBuilder.DefineMethod(name,
                                                          MethodAttributes.Public | MethodAttributes.Final |
@@ -364,7 +344,7 @@ namespace Falsy.NET.Internals.TypeBuilder
             generator.Emit(OpCodes.Ret);
         }
 
-        private static Tuple<EventBuilder, FieldBuilder> GenerateEvent(System.Reflection.Emit.TypeBuilder typeBuilder, EventInfo @event)
+        private static Tuple<EventBuilder, FieldBuilder> GenerateEvent(System.Reflection.Emit.TypeBuilder typeBuilder, IEventCaller @event)
         {
             var eventName = @event.Name;
             var eventHandlerType = @event.EventHandlerType;
@@ -374,7 +354,7 @@ namespace Falsy.NET.Internals.TypeBuilder
 
             //Combine event
             var add = typeBuilder.DefineMethod("add_" + eventName,
-                                               VirtGetSetAttr |
+                                               VirtPublicProperty |
                                                MethodAttributes.Final |
                                                MethodAttributes.NewSlot,
                                                Constants.VoidType,
@@ -392,7 +372,7 @@ namespace Falsy.NET.Internals.TypeBuilder
 
             //Remove event
             var remove = typeBuilder.DefineMethod("remove_" + eventName,
-                                                  VirtGetSetAttr |
+                                                  VirtPublicProperty |
                                                   MethodAttributes.Final |
                                                   MethodAttributes.NewSlot,
                                                   Constants.VoidType,
