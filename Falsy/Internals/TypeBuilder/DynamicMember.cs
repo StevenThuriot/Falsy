@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using Horizon;
 
 namespace Falsy.NET.Internals.TypeBuilder
 {
@@ -15,6 +16,14 @@ namespace Falsy.NET.Internals.TypeBuilder
             Name = name;
             _type = type;
             IsProperty = isProperty;
+            IsVirtual = isVirtual;
+        }
+
+        public DynamicMember(IMemberCaller info, bool isVirtual)
+        {
+            Name = info.Name;
+            _type = info.MemberType;
+            IsProperty = info.IsProperty;
             IsVirtual = isVirtual;
         }
 
