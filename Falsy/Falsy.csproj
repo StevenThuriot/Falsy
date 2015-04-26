@@ -64,6 +64,7 @@
     <Compile Include="Horizon\ExtendedTypeInfo.AutoResolve.cs" />
     <Compile Include="Horizon\ExtendedTypeInfo.cs" />
     <Compile Include="Horizon\ICaller.cs" />
+    <Compile Include="Horizon\IConstructorCaller.cs" />
     <Compile Include="Horizon\IEventCaller.cs" />
     <Compile Include="Horizon\IMethodCaller.cs" />
     <Compile Include="Horizon\IMemberCaller.cs" />

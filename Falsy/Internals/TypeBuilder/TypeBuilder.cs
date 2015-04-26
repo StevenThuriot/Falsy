@@ -223,7 +223,7 @@ namespace Falsy.NET.Internals.TypeBuilder
             generator.Emit(OpCodes.Ldarg_0);
             generator.Emit(OpCodes.Ldarg_1);
             generator.Emit(OpCodes.Newobj, _createEventArgs.Value);
-            generator.Emit(OpCodes.Callvirt, _invokeDelegate.Value);
+            generator.Emit(OpCodes.Callvirt, TypeInfo<ProgressChangedEventHandler>.GetMethod("Invoke").First().MethodInfo);
 
             generator.MarkLabel(returnLabel);
             generator.Emit(OpCodes.Ret);
@@ -287,10 +287,20 @@ namespace Falsy.NET.Internals.TypeBuilder
         }
 
 
-        private static readonly Lazy<MethodInfo> _delegateCombine = new Lazy<MethodInfo>(() => Constants.Typed<Delegate>.OwnerType.GetMethod("Combine", new[] { Constants.Typed<Delegate>.OwnerType, Constants.Typed<Delegate>.OwnerType }));
-        private static readonly Lazy<MethodInfo> _delegateRemove = new Lazy<MethodInfo>(() => Constants.Typed<Delegate>.OwnerType.GetMethod("Remove", new[] { Constants.Typed<Delegate>.OwnerType, Constants.Typed<Delegate>.OwnerType }));
-        private static readonly Lazy<MethodInfo> _invokeDelegate = new Lazy<MethodInfo>(() => Constants.Typed<PropertyChangedEventHandler>.OwnerType.GetMethod("Invoke"));
-        private static readonly Lazy<ConstructorInfo> _createEventArgs = new Lazy<ConstructorInfo>(() => Constants.Typed<PropertyChangingEventArgs>.OwnerType.GetConstructor(new[] { Constants.StringType }));
+        private static readonly Lazy<MethodInfo> _delegateCombine = new Lazy<MethodInfo>(() =>
+        {
+            var delegateType = Constants.Typed<Delegate>.OwnerType;
+            return TypeInfo<Delegate>.GetSpecificMethod("Combine", new []{ delegateType, delegateType }).MethodInfo;
+        });
+        
+        
+        private static readonly Lazy<MethodInfo> _delegateRemove = new Lazy<MethodInfo>(() =>
+        {
+            var delegateType = Constants.Typed<Delegate>.OwnerType;
+            return TypeInfo<Delegate>.GetSpecificMethod("Remove", new []{ delegateType, delegateType }).MethodInfo;
+        });
+        
+        private static readonly Lazy<ConstructorInfo> _createEventArgs = new Lazy<ConstructorInfo>(() => TypeInfo<PropertyChangingEventArgs>.GetConstructor(Constants.StringType).ConstructorInfo);
 
 
         private static void GenerateMethod(System.Reflection.Emit.TypeBuilder typeBuilder, IMethodCaller methodInfo, Delegate call = null)
