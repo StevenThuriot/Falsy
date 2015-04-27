@@ -88,7 +88,6 @@
     <Compile Include="Horizon\Reference.cs" />
     <Compile Include="Horizon\Argument.cs" />
     <Compile Include="Horizon\CallerSelector.cs" />
-    <Compile Include="Horizon\Constants.cs" />
     <Compile Include="Horizon\GenericMethodCaller.cs" />
     <Compile Include="Horizon\GenericType.cs" />
     <Compile Include="Horizon\InvokeHelper.cs" />

@@ -1,7 +1,6 @@
 using System;
 using System.ComponentModel;
 using System.Globalization;
-using Horizon;
 
 namespace Falsy.NET.Internals
 {
@@ -23,7 +22,7 @@ namespace Falsy.NET.Internals
             if (_innerType == null)
                 return destinationType.IsClass; //undefined, null thus should be a class.
 
-            return _innerType.IsAssignableFrom(destinationType) || Constants.BooleanType == destinationType;
+            return _innerType.IsAssignableFrom(destinationType) || typeof(bool) == destinationType;
         }
 
         public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value,
@@ -37,7 +36,7 @@ namespace Falsy.NET.Internals
             if (_innerType.IsAssignableFrom(destinationType))
                 return falsy.GetValue();
 
-            if (Constants.BooleanType == destinationType)
+            if (typeof(bool) == destinationType)
                 return falsy.GetBooleanValue();
 
             return base.ConvertTo(context, culture, value, destinationType);

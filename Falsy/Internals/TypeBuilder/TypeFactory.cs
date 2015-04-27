@@ -89,7 +89,7 @@ namespace Falsy.NET.Internals.TypeBuilder
 
                 if ("NOTIFYCHANGES" == binderName)
                 {
-                    var propertyChangedInterface = Constants.Typed<INotifyPropertyChanged>.OwnerType;
+                    var propertyChangedInterface = typeof(INotifyPropertyChanged);
 
                     if (_interfaces == null)
                     {

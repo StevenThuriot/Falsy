@@ -88,7 +88,7 @@ namespace Falsy.NET.Internals.TypeBuilder
                     var events = TypeInfo.Extended.Events(@interface);
 
                     if (!notifyChanges &&
-                        (notifyChanges = Constants.Typed<INotifyPropertyChanged>.OwnerType.IsAssignableFrom(@interface)))
+                        (notifyChanges = typeof(INotifyPropertyChanged).IsAssignableFrom(@interface)))
                     {
                         foreach (var @event in events)
                         {
@@ -206,11 +206,11 @@ namespace Falsy.NET.Internals.TypeBuilder
 
         private static MethodBuilder BuildOnPropertyChanged(System.Reflection.Emit.TypeBuilder typeBuilder, EventBuilder eventBuilder, FieldInfo eventBackingField)
         {
-            var raisePropertyChanged = typeBuilder.DefineMethod("OnPropertyChanged", MethodAttributes.Private, Constants.VoidType, new[] {Constants.StringType});
+            var raisePropertyChanged = typeBuilder.DefineMethod("OnPropertyChanged", MethodAttributes.Private, typeof(void), new[] {typeof(string)});
             var generator = raisePropertyChanged.GetILGenerator();
             var returnLabel = generator.DefineLabel();
 
-            generator.DeclareLocal(Constants.Typed<PropertyChangedEventHandler>.OwnerType);
+            generator.DeclareLocal(typeof(PropertyChangedEventHandler));
             generator.Emit(OpCodes.Ldarg_0);
             generator.Emit(OpCodes.Ldfld, eventBackingField);
             generator.Emit(OpCodes.Stloc_0);
@@ -289,18 +289,18 @@ namespace Falsy.NET.Internals.TypeBuilder
 
         private static readonly Lazy<MethodInfo> _delegateCombine = new Lazy<MethodInfo>(() =>
         {
-            var delegateType = Constants.Typed<Delegate>.OwnerType;
+            var delegateType = typeof(Delegate);
             return TypeInfo<Delegate>.GetSpecificMethod("Combine", new []{ delegateType, delegateType }).MethodInfo;
         });
         
         
         private static readonly Lazy<MethodInfo> _delegateRemove = new Lazy<MethodInfo>(() =>
         {
-            var delegateType = Constants.Typed<Delegate>.OwnerType;
+            var delegateType = typeof(Delegate);
             return TypeInfo<Delegate>.GetSpecificMethod("Remove", new []{ delegateType, delegateType }).MethodInfo;
         });
         
-        private static readonly Lazy<ConstructorInfo> _createEventArgs = new Lazy<ConstructorInfo>(() => TypeInfo<PropertyChangingEventArgs>.GetConstructor(Constants.StringType).ConstructorInfo);
+        private static readonly Lazy<ConstructorInfo> _createEventArgs = new Lazy<ConstructorInfo>(() => TypeInfo<PropertyChangingEventArgs>.GetConstructor(typeof(string)).ConstructorInfo);
 
 
         private static void GenerateMethod(System.Reflection.Emit.TypeBuilder typeBuilder, IMethodCaller methodInfo, Delegate call = null)
@@ -362,12 +362,14 @@ namespace Falsy.NET.Internals.TypeBuilder
 
             var eventBackingField = typeBuilder.DefineField("m_" + eventName, eventHandlerType, FieldAttributes.Private);
 
+            var voidType = typeof(void);
+
             //Combine event
             var add = typeBuilder.DefineMethod("add_" + eventName,
                                                VirtPublicProperty |
                                                MethodAttributes.Final |
                                                MethodAttributes.NewSlot,
-                                               Constants.VoidType,
+                                               voidType,
                                                eventHandlerTypes);
 
             var generator = add.GetILGenerator();
@@ -385,7 +387,7 @@ namespace Falsy.NET.Internals.TypeBuilder
                                                   VirtPublicProperty |
                                                   MethodAttributes.Final |
                                                   MethodAttributes.NewSlot,
-                                                  Constants.VoidType,
+                                                  voidType,
                                                   eventHandlerTypes);
 
             generator = remove.GetILGenerator();

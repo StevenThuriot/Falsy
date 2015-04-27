@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using Falsy.NET.Internals;
 using Falsy.NET.Internals.TypeBuilder;
 using Horizon;
@@ -57,12 +58,11 @@ namespace Falsy.NET
         private static dynamic InternalDictionaryFalsify<T>(T instance)
             where T : IDictionary
         {
-            if (Constants.Typed<T>.IsGenericDictionary)
+            if (Helper<T>.IsGenericDictionary)
                 return TypedDictionaryBuilder.Build((dynamic) instance);
 
             return new DictionaryFalsy<T>(instance);
         }
-
 
 
 
@@ -79,5 +79,27 @@ namespace Falsy.NET
 
 
 
+
+
+
+
+
+        static class Helper<T>
+        {
+            private static bool? _isGenericDictionary;
+            public static bool IsGenericDictionary
+            {
+                get
+                {
+                    if (_isGenericDictionary.HasValue)
+                        return _isGenericDictionary.Value;
+
+                    var result = typeof(T).GetInterface(typeof(IDictionary<,>).Name) != null;
+                    _isGenericDictionary = result;
+
+                    return result;
+                }
+            }
+        }
     }
 }

@@ -21,16 +21,18 @@ namespace Falsy.NET.Internals
 
 	    public static Type UnderlyingType 
 	    {
-		    get { return Constants.Typed<T>.OwnerType; }
+		    get { return typeof(T); }
 	    }
 
         static DynamicFalsy() //Once per T.
         {
-            if (Constants.Typed<T>.OwnerType == Constants.StringType)
+            var ownerType = typeof(T);
+
+            if (ownerType == typeof(string))
             {
                 Falsy = obj => string.IsNullOrEmpty((string)(object)obj);
             }
-            else if (Constants.Typed<T>.OwnerType == Constants.DoubleType)
+            else if (ownerType == typeof(double))
             {
                 Falsy = obj =>
                         {
@@ -40,7 +42,7 @@ namespace Falsy.NET.Internals
                             return Double.IsNaN(value) || Math.Abs(value) < Double.Epsilon;
                         };
             }
-            else if (Constants.Typed<T>.OwnerType == Constants.FloatType)
+            else if (ownerType == typeof(float))
             {
                 Falsy = obj =>
                         {
@@ -50,11 +52,11 @@ namespace Falsy.NET.Internals
                             return Single.IsNaN(value) || Math.Abs(value) < Single.Epsilon;
                         };
             }
-            else if (Constants.Typed<T>.OwnerType.IsNumeric())
+            else if (ownerType.IsNumeric())
             {
                 Falsy = obj => Reference.IsNull(obj) || 0.Equals(obj);
             }
-            else if (Constants.Typed<T>.OwnerType == Constants.BooleanType)
+            else if (ownerType == typeof(bool))
             {
                 Falsy = obj => Reference.IsNull(obj) || false.Equals(obj);
             }
@@ -63,7 +65,7 @@ namespace Falsy.NET.Internals
                 Falsy = obj => Reference.IsNull(obj);
             }
         }
-		
+
         internal DynamicFalsy(T instance)
         {
             _instance = instance;
@@ -130,13 +132,13 @@ namespace Falsy.NET.Internals
 
         public override bool TryConvert(ConvertBinder binder, out object result)
         {
-            if (binder.ReturnType == Constants.BooleanType)
+            if (binder.ReturnType == typeof(bool))
             {
                 result = !_isFalse.Value;
                 return true;
             }
 
-            if (binder.ReturnType == Constants.Typed<T>.OwnerType)
+            if (binder.ReturnType == typeof(T))
             {
                 result = _instance;
                 return true;
@@ -180,7 +182,7 @@ namespace Falsy.NET.Internals
 
                 case ExpressionType.Or:
                 case ExpressionType.OrElse:
-                    if (binder.ReturnType == Constants.BooleanType)
+                    if (binder.ReturnType == typeof(bool))
                     {
                         result = !_isFalse.Value || !Equals(arg);
                     }
@@ -188,7 +190,7 @@ namespace Falsy.NET.Internals
                     {
                         if (!_isFalse.Value)
                         {
-                            if (binder.ReturnType == Constants.Typed<T>.OwnerType)
+                            if (binder.ReturnType == typeof(T))
                             {
                                 result = _instance;
                             }
@@ -221,7 +223,7 @@ namespace Falsy.NET.Internals
                 return true;
             }
 
-            if (binder.ReturnType == Constants.BooleanType)
+            if (binder.ReturnType == typeof(bool))
             {
                 if (binder.Operation == ExpressionType.IsTrue)
                 {

@@ -65,7 +65,7 @@ namespace Falsy.NET.Internals
 
         public override bool TryConvert(ConvertBinder binder, out object result)
         {
-            if (binder.ReturnType == Constants.BooleanType)
+            if (binder.ReturnType == typeof(bool))
             {
                 result = false;
                 return true;
@@ -109,7 +109,7 @@ namespace Falsy.NET.Internals
 
                 case ExpressionType.Or:
                 case ExpressionType.OrElse:
-                    if (binder.ReturnType == Constants.BooleanType)
+                    if (binder.ReturnType == typeof(bool))
                     {
                         result = !Equals(arg);
                     }
@@ -139,7 +139,7 @@ namespace Falsy.NET.Internals
                 return true;
             }
 
-            if (binder.ReturnType == Constants.BooleanType)
+            if (binder.ReturnType == typeof(bool))
             {
                 if (binder.Operation == ExpressionType.IsTrue)
                 {
