@@ -1,21 +1,20 @@
 using System;
-using System.Reflection;
 using Horizon;
 
 namespace Falsy.NET.Internals.TypeBuilder
 {
     class DynamicMember
     {
-        public readonly bool IsProperty;
+        public readonly MemberType MemberType;
         public readonly bool IsVirtual;
         public readonly string Name;
         private readonly Type _type;
 
-        public DynamicMember(string name, Type type, bool isProperty, bool isVirtual)
+        public DynamicMember(string name, Type type, MemberType memberType, bool isVirtual)
         {
             Name = name;
             _type = type;
-            IsProperty = isProperty;
+            MemberType = memberType;
             IsVirtual = isVirtual;
         }
 
@@ -23,23 +22,7 @@ namespace Falsy.NET.Internals.TypeBuilder
         {
             Name = info.Name;
             _type = info.MemberType;
-            IsProperty = info.IsProperty;
-            IsVirtual = isVirtual;
-        }
-
-        public DynamicMember(PropertyInfo info, bool isVirtual)
-        {
-            Name = info.Name;
-            _type = info.PropertyType;
-            IsProperty = true;
-            IsVirtual = isVirtual;
-        }
-
-        public DynamicMember(FieldInfo info, bool isVirtual)
-        {
-            Name = info.Name;
-            _type = info.FieldType;
-            IsProperty = false;
+            MemberType = info.IsProperty ? MemberType.Property : MemberType.Field;
             IsVirtual = isVirtual;
         }
 
@@ -47,10 +30,16 @@ namespace Falsy.NET.Internals.TypeBuilder
         {
             get { return _type; }
         }
-        
-        public static DynamicMember Create<T>(string name, T value, bool isProperty = true, bool isVirtual = false)
+
+        public static DynamicMember Create<T>(string name, T value, bool isVirtual = false)
         {
-            return new DynamicMember<T>(name, value, isProperty, isVirtual);
+            var memberType = value is Delegate ? MemberType.Method : MemberType.Property;
+            return new DynamicMember<T>(name, value, memberType, isVirtual);
+        }
+
+        public static DynamicMember Create<T>(string name, T value, MemberType memberType, bool isVirtual = false)
+        {
+            return new DynamicMember<T>(name, value, memberType, isVirtual);
         }
     }
 }

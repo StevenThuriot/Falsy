@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Dynamic;
 using System.Linq;
-using Horizon;
 
 namespace Falsy.NET.Internals.TypeBuilder
 {
@@ -26,17 +25,33 @@ namespace Falsy.NET.Internals.TypeBuilder
                 if (dynamicMember == null)
                 {
                     var name = argumentNames[i];
+                    var memberType = MemberType.Property;
+
                     if (objectsAreValues)
                     {
-                        dynamicMember = DynamicMember.Create(name, (dynamic) argument, true, false);
+                        if (argument is Delegate)
+                            memberType = MemberType.Method;
+
+                        dynamicMember = DynamicMember.Create(name, (dynamic) argument, memberType, false);
                     }
                     else
                     {
-                        var type = argument as Type;
-                        if (type == null)
-                            throw new NotSupportedException("Definitions require a type.");
+                        if (argument is Delegate)
+                        {
+                            memberType = MemberType.Method;
+                            dynamicMember = DynamicMember.Create(name, (dynamic)argument, memberType, false);
+                        }
+                        else
+                        {
+                            var type = argument as Type;
+                            if (type == null)
+                                throw new NotSupportedException("Definitions require a type.");
 
-                        dynamicMember = new DynamicMember(name, type, true, false);
+                            if (typeof (Delegate).IsAssignableFrom(type))
+                                memberType = MemberType.Method;
+
+                            dynamicMember = new DynamicMember(name, type, memberType, false);
+                        }
                     }
                 }
 
@@ -81,8 +96,7 @@ namespace Falsy.NET.Internals.TypeBuilder
                         foreach (var type in types)
                             _interfaces.Add(type);
                     }
-
-
+                    
                     result = this;
                     return true;
                 }

@@ -1149,5 +1149,42 @@ namespace Falsy.Tests
 
             Assert.AreEqual(0, result);
         }
+
+        [TestMethod]
+        public void FalsyCanImplementDelegatesAsMethods()
+        {
+            NET.Falsy
+               .Define
+               .TypeWithADelegateAsMethod(
+                    Multiply: new Func<int, int, int>(Multiply)
+                );
+
+            var instance = NET.Falsy.New.TypeWithADelegateAsMethod();
+            bool hasMethod = TypeInfo.HasMethod(instance, "Multiply");
+
+            Assert.IsTrue(hasMethod);
+
+            IMethodCaller method = TypeInfo.GetSpecificMethod(instance, "Multiply", typeof(int), typeof(int));
+
+            Assert.IsNotNull(method);
+            Assert.AreEqual(typeof(int), method.ReturnType);
+            Assert.IsTrue(method.ParameterTypes.Count == 2);
+            Assert.IsTrue(method.ParameterTypes.All(x => x.ParameterType == typeof(int)));
+
+            int multiplication = instance.Multiply(5, 3);
+
+            Assert.AreEqual(15, multiplication);
+        }
+
+
+        //Note to self, when declaring this method as a variable inside our previous method, a System.MethodAccessException is thrown.
+        //Remember that our new method lives inside a dynamic assembly and needs access to this method to be able to call it.
+        public static int Multiply(int x, int y)
+        {
+            Assert.AreEqual(5, x);
+            Assert.AreEqual(3, y);
+
+            return x * y;
+        }
     }
 }

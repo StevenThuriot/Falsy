@@ -1,26 +1,29 @@
+using System;
 using Horizon;
 
 namespace Falsy.NET.Internals.TypeBuilder
 {
     sealed class DynamicMember<T> : DynamicMember, ICanVisit
     {
-        private readonly T _value;
+        public readonly T Value;
 
-        public DynamicMember(string name, T value, bool isProperty, bool isVirtual)
-            : base(name, typeof (T), isProperty, isVirtual)
+        public DynamicMember(string name, T value, MemberType memberType, bool isVirtual)
+            : base(name, typeof(T), memberType, isVirtual)
         {
-            _value = value;
+            Value = value;
         }
 
         public void Visit(dynamic instance)
         {
-            if (IsProperty)
+            switch (MemberType)
             {
-                TypeInfo.SetProperty(instance, Name, _value);
-            }
-            else
-            {
-                TypeInfo.SetField(instance, Name, _value);
+                case MemberType.Field:
+                    TypeInfo.SetField(instance, Name, Value);
+                    break;
+
+                case MemberType.Property:
+                    TypeInfo.SetProperty(instance, Name, Value);
+                    break;
             }
         }
     }

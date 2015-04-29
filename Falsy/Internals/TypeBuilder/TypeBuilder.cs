@@ -43,6 +43,8 @@ namespace Falsy.NET.Internals.TypeBuilder
 
         internal static Type CreateType(string typeName, IReadOnlyList<DynamicMember> nodes, Type parent = null, IEnumerable<Type> interfaces = null)
         {
+            //Todo: the nodes need to become builders that can take care of things on their own.
+
             Type type;
             if (_typeCache.TryGetValue(typeName, out type))
                 return type;
@@ -116,79 +118,92 @@ namespace Falsy.NET.Internals.TypeBuilder
             foreach (var node in members)
             {
                 var memberName = node.Name;
-                var memberType = node.Type;
-                var isProperty = node.IsProperty;
 
-                var fieldName = memberName;
-                FieldAttributes fieldAttributes;
 
-                if (isProperty)
+                if (node.MemberType == MemberType.Method)
                 {
-                    fieldName = "m_" + fieldName;
-                    fieldAttributes = FieldAttributes.Private;
+                    Delegate @delegate = ((dynamic) node).Value;
+                    GenerateMethod(typeBuilder, memberName, @delegate, node.IsVirtual);
                 }
                 else
                 {
-                    fieldAttributes = FieldAttributes.Public;
-                }
+                    var memberType = node.Type;
+                    var isProperty = node.MemberType == MemberType.Property;
 
-                // Generate a field
-                var field = typeBuilder.DefineField(fieldName, memberType, fieldAttributes);
+                    var fieldName = memberName;
+                    FieldAttributes fieldAttributes;
 
-                if (isProperty)
-                {
-                    var methodAttributes = node.IsVirtual ? VirtPublicProperty : PublicProperty;
-
-                    // Define the property getter method for our private field.
-                    var getBuilder = typeBuilder.DefineMethod("get_" + memberName, methodAttributes, memberType, Type.EmptyTypes);
-
-                    var getIL = getBuilder.GetILGenerator();
-                    getIL.Emit(OpCodes.Ldarg_0);
-                    getIL.Emit(OpCodes.Ldfld, field);
-                    getIL.Emit(OpCodes.Ret);
-
-                    var parameterTypes = new[] {memberType};
-
-                    // Define the property setter method for our private field.
-                    var setBuilder = typeBuilder.DefineMethod("set_" + memberName, methodAttributes, null, parameterTypes);
-
-                    var setIL = setBuilder.GetILGenerator();
-
-                    setIL.Emit(OpCodes.Ldarg_0);
-
-                    if (notifyChanges)
+                    if (isProperty)
                     {
-                        setIL.Emit(OpCodes.Ldfld, field);
-                        setIL.Emit(OpCodes.Ldarg_1);
+                        fieldName = "m_" + fieldName;
+                        fieldAttributes = FieldAttributes.Private;
+                    }
+                    else
+                    {
+                        fieldAttributes = FieldAttributes.Public;
+                    }
 
-                        var setFieldLabel = setIL.DefineLabel();
-                        setIL.Emit(OpCodes.Bne_Un_S, setFieldLabel);
+                    // Generate a field
+                    var field = typeBuilder.DefineField(fieldName, memberType, fieldAttributes);
+
+                    if (isProperty)
+                    {
+                        var methodAttributes = node.IsVirtual ? VirtPublicProperty : PublicProperty;
+
+                        // Define the property getter method for our private field.
+                        var getBuilder = typeBuilder.DefineMethod("get_" + memberName, methodAttributes, memberType,
+                                                                  Type.EmptyTypes);
+
+                        var getIL = getBuilder.GetILGenerator();
+                        getIL.Emit(OpCodes.Ldarg_0);
+                        getIL.Emit(OpCodes.Ldfld, field);
+                        getIL.Emit(OpCodes.Ret);
+
+                        var parameterTypes = new[] {memberType};
+
+                        // Define the property setter method for our private field.
+                        var setBuilder = typeBuilder.DefineMethod("set_" + memberName, methodAttributes, null,
+                                                                  parameterTypes);
+
+                        var setIL = setBuilder.GetILGenerator();
+
+                        setIL.Emit(OpCodes.Ldarg_0);
+
+                        if (notifyChanges)
+                        {
+                            setIL.Emit(OpCodes.Ldfld, field);
+                            setIL.Emit(OpCodes.Ldarg_1);
+
+                            var setFieldLabel = setIL.DefineLabel();
+                            setIL.Emit(OpCodes.Bne_Un_S, setFieldLabel);
+
+                            setIL.Emit(OpCodes.Ret);
+
+
+                            setIL.MarkLabel(setFieldLabel);
+                            setIL.Emit(OpCodes.Ldarg_0);
+                        }
+
+                        setIL.Emit(OpCodes.Ldarg_1);
+                        setIL.Emit(OpCodes.Stfld, field);
+
+                        if (notifyChanges)
+                        {
+                            setIL.Emit(OpCodes.Ldarg_0);
+                            setIL.Emit(OpCodes.Ldstr, memberName);
+                            setIL.Emit(OpCodes.Call, raisePropertyChanged);
+                        }
 
                         setIL.Emit(OpCodes.Ret);
 
+                        // Generate a public property
+                        var property = typeBuilder.DefineProperty(memberName, PropertyAttributes.None, memberType,
+                                                                  parameterTypes);
 
-                        setIL.MarkLabel(setFieldLabel);
-                        setIL.Emit(OpCodes.Ldarg_0);
+                        // Map our two methods created above to their corresponding behaviors, "get" and "set" respectively. 
+                        property.SetGetMethod(getBuilder);
+                        property.SetSetMethod(setBuilder);
                     }
-                    
-                    setIL.Emit(OpCodes.Ldarg_1);
-                    setIL.Emit(OpCodes.Stfld, field);
-
-                    if (notifyChanges)
-                    {
-                        setIL.Emit(OpCodes.Ldarg_0);
-                        setIL.Emit(OpCodes.Ldstr, memberName);
-                        setIL.Emit(OpCodes.Call, raisePropertyChanged);
-                    }
-
-                    setIL.Emit(OpCodes.Ret);
-
-                    // Generate a public property
-                    var property = typeBuilder.DefineProperty(memberName, PropertyAttributes.None, memberType, parameterTypes);
-
-                    // Map our two methods created above to their corresponding behaviors, "get" and "set" respectively. 
-                    property.SetGetMethod(getBuilder);
-                    property.SetSetMethod(setBuilder);
                 }
             }
 
@@ -309,6 +324,11 @@ namespace Falsy.NET.Internals.TypeBuilder
             var returnType = methodInfo.ReturnType;
             var parameterTypes = methodInfo.ParameterTypes.Select(x => x.ParameterType).ToArray();
 
+            GenerateMethod(typeBuilder, name, returnType, parameterTypes, call);
+        }
+
+        private static void GenerateMethod(System.Reflection.Emit.TypeBuilder typeBuilder, string name, Type returnType, Type[] parameterTypes, Delegate call = null)
+        {
             var methodBuilder = typeBuilder.DefineMethod(name,
                                                          MethodAttributes.Public | MethodAttributes.Final |
                                                          MethodAttributes.HideBySig | MethodAttributes.NewSlot |
@@ -324,7 +344,7 @@ namespace Falsy.NET.Internals.TypeBuilder
                 for (var i = 1; i <= parameterTypes.Length; i++)
                     generator.Emit(OpCodes.Ldarg_S, i);
 
-                generator.Emit(OpCodes.Call, call.Method);
+                generator.Emit(OpCodes.Callvirt, call.Method);
             }
             else if (returnType != typeof (void))
             {
@@ -343,13 +363,35 @@ namespace Falsy.NET.Internals.TypeBuilder
                 }
                 else
                 {
-
                     var local = generator.DeclareLocal(returnType);
                     generator.Emit(OpCodes.Ldloca_S, local);
                     generator.Emit(OpCodes.Initobj, returnType);
                     generator.Emit(OpCodes.Ldloc_0);
                 }
             }
+
+            generator.Emit(OpCodes.Ret);
+        }
+
+        private static void GenerateMethod(System.Reflection.Emit.TypeBuilder typeBuilder, string name, Delegate call, bool isVirtual)
+        {
+            var methodInfo = call.Method;
+            var parameterTypes = methodInfo.GetParameters().Select(x => x.ParameterType).ToArray();
+
+            var methodAttributes = MethodAttributes.Public | MethodAttributes.Final |
+                                   MethodAttributes.HideBySig | MethodAttributes.NewSlot;
+
+            if (isVirtual)
+                methodAttributes |= MethodAttributes.Virtual;
+
+            var methodBuilder = typeBuilder.DefineMethod(name, methodAttributes, methodInfo.ReturnType, parameterTypes);
+
+            var generator = methodBuilder.GetILGenerator();
+
+            for (var i = 1; i <= parameterTypes.Length; i++)
+                generator.Emit(OpCodes.Ldarg_S, i);
+
+            generator.Emit(OpCodes.Call, methodInfo);
 
             generator.Emit(OpCodes.Ret);
         }
