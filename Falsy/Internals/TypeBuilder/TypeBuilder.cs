@@ -318,17 +318,12 @@ namespace Falsy.NET.Internals.TypeBuilder
         private static readonly Lazy<ConstructorInfo> _createEventArgs = new Lazy<ConstructorInfo>(() => TypeInfo<PropertyChangingEventArgs>.GetConstructor(typeof(string)).ConstructorInfo);
 
 
-        private static void GenerateMethod(System.Reflection.Emit.TypeBuilder typeBuilder, IMethodCaller methodInfo, Delegate call = null)
+        private static void GenerateMethod(System.Reflection.Emit.TypeBuilder typeBuilder, IMethodCaller methodInfo)
         {
             var name = methodInfo.Name;
             var returnType = methodInfo.ReturnType;
             var parameterTypes = methodInfo.ParameterTypes.Select(x => x.ParameterType).ToArray();
 
-            GenerateMethod(typeBuilder, name, returnType, parameterTypes, call);
-        }
-
-        private static void GenerateMethod(System.Reflection.Emit.TypeBuilder typeBuilder, string name, Type returnType, Type[] parameterTypes, Delegate call = null)
-        {
             var methodBuilder = typeBuilder.DefineMethod(name,
                                                          MethodAttributes.Public | MethodAttributes.Final |
                                                          MethodAttributes.HideBySig | MethodAttributes.NewSlot |
@@ -339,14 +334,7 @@ namespace Falsy.NET.Internals.TypeBuilder
 
             var generator = methodBuilder.GetILGenerator();
 
-            if (call != null)
-            {
-                for (var i = 1; i <= parameterTypes.Length; i++)
-                    generator.Emit(OpCodes.Ldarg_S, i);
-
-                generator.Emit(OpCodes.Callvirt, call.Method);
-            }
-            else if (returnType != typeof (void))
+            if (returnType != typeof (void))
             {
                 if (!returnType.IsValueType)
                 {
