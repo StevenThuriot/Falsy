@@ -5,5 +5,6 @@ namespace Falsy.NET.Internals.TypeBuilder
         Field = 0,
         Property = 1,
         Method = 2,
+        Event = 3,
     }
 }

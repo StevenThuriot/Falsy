@@ -52,11 +52,11 @@ namespace Falsy.NET.Internals.TypeBuilder
 
             var typeBuilder = _falsyModule.DefineType(typeName, TypeAttributes.Public | TypeAttributes.Class);
 
-            IReadOnlyList<DynamicMember> members;
+            List<DynamicMember> members;
 
             if (parent == null)
             {
-                members = nodes;
+                members = nodes.ToList();
             }
             else
             {
@@ -111,8 +111,8 @@ namespace Falsy.NET.Internals.TypeBuilder
                     }
 
 
-                    foreach (var method in TypeInfo.Extended.Methods(@interface))
-                        GenerateMethod(typeBuilder, method);
+                    var emptyMethods = TypeInfo.Extended.Methods(@interface).Select(method => new EmptyDynamicMethod(method));
+                    members.AddRange(emptyMethods);
                 }
             }
             
@@ -226,51 +226,7 @@ namespace Falsy.NET.Internals.TypeBuilder
         });
         
         private static readonly Lazy<ConstructorInfo> _createEventArgs = new Lazy<ConstructorInfo>(() => TypeInfo<PropertyChangingEventArgs>.GetConstructor(typeof(string)).ConstructorInfo);
-
-
-        private static void GenerateMethod(System.Reflection.Emit.TypeBuilder typeBuilder, IMethodCaller methodInfo)
-        {
-            var name = methodInfo.Name;
-            var returnType = methodInfo.ReturnType;
-            var parameterTypes = methodInfo.ParameterTypes.Select(x => x.ParameterType).ToArray();
-
-            var methodBuilder = typeBuilder.DefineMethod(name,
-                                                         MethodAttributes.Public | MethodAttributes.Final |
-                                                         MethodAttributes.HideBySig | MethodAttributes.NewSlot |
-                                                         MethodAttributes.Virtual,
-                                                         returnType,
-                                                         parameterTypes);
-
-
-            var generator = methodBuilder.GetILGenerator();
-
-            if (returnType != typeof (void))
-            {
-                if (!returnType.IsValueType)
-                {
-                    generator.Emit(OpCodes.Ldnull);
-                }
-                else if (returnType.IsPrimitive)
-                {
-                    generator.Emit(OpCodes.Ldc_I4_0);
-
-                    //Do we need to manually convert? Seems to work on its own!
-                    //var size = System.Runtime.InteropServices.Marshal.SizeOf(returnType);
-                    //if (size == 8)
-                    //    generator.Emit(OpCodes.Conv_I8);
-                }
-                else
-                {
-                    var local = generator.DeclareLocal(returnType);
-                    generator.Emit(OpCodes.Ldloca_S, local);
-                    generator.Emit(OpCodes.Initobj, returnType);
-                    generator.Emit(OpCodes.Ldloc_0);
-                }
-            }
-
-            generator.Emit(OpCodes.Ret);
-        }
-
+        
         private static Tuple<EventBuilder, FieldBuilder> GenerateEvent(System.Reflection.Emit.TypeBuilder typeBuilder, IEventCaller @event)
         {
             var eventName = @event.Name;

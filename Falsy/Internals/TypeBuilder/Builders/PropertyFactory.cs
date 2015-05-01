@@ -6,15 +6,11 @@ namespace Falsy.NET.Internals.TypeBuilder.Builders
 {
     static class PropertyFactory
     {
-        private const MethodAttributes PublicProperty = MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName;
-        private const MethodAttributes VirtPublicProperty = PublicProperty | MethodAttributes.Virtual;
-
-
         public static PropertyBuilder BuildProperty(this System.Reflection.Emit.TypeBuilder typeBuilder, DynamicMember node, MethodBuilder raisePropertyChanged = null)
         {
             var field = typeBuilder.BuildField(node);
 
-            var methodAttributes = node.IsVirtual ? VirtPublicProperty : PublicProperty;
+            var methodAttributes = node.IsVirtual ? Factory.VirtPublicProperty : Factory.PublicProperty;
 
             var memberName = node.Name;
             var memberType = node.Type;

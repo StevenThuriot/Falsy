@@ -78,12 +78,14 @@
     <Compile Include="Falsy.cs" />
     <Compile Include="Internals\EnumerableFalsy.cs" />
     <Compile Include="Internals\FalsyTypeConverter.cs" />
+    <Compile Include="Internals\TypeBuilder\Builders\EventFactory.cs" />
     <Compile Include="Internals\TypeBuilder\Builders\Factory.cs" />
     <Compile Include="Internals\TypeBuilder\Builders\FieldFactory.cs" />
     <Compile Include="Internals\TypeBuilder\Builders\MethodFactory.cs" />
     <Compile Include="Internals\TypeBuilder\Builders\PropertyFactory.cs" />
     <Compile Include="Internals\TypeBuilder\DynamicMember.cs" />
     <Compile Include="Internals\TypeBuilder\DynamicMember.generic.cs" />
+    <Compile Include="Internals\TypeBuilder\EmptyDynamicMethod.cs" />
     <Compile Include="Internals\TypeBuilder\ICanVisit.cs" />
     <Compile Include="Internals\TypeBuilder\MemberType.cs" />
     <Compile Include="Internals\TypeBuilder\TypeBuilder.cs" />
