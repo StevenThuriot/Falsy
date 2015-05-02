@@ -38,7 +38,8 @@ namespace Falsy.NET.Internals.TypeBuilder.Builders
                         break;
 
                     case MemberType.Event:
-                        throw new NotImplementedException("Event");
+                        typeBuilder.BuildEvent(member);
+                        break;
 
                     default:
                         throw new ArgumentOutOfRangeException();

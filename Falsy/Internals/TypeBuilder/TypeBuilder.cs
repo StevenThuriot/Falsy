@@ -106,8 +106,7 @@ namespace Falsy.NET.Internals.TypeBuilder
                     }
                     else
                     {
-                        foreach (var @event in events)
-                            GenerateEvent(typeBuilder, @event);
+                        members.AddRange(events.Select(x => new DynamicMember(x.Name, x.EventHandlerType, MemberType.Event, false)));
                     }
 
 

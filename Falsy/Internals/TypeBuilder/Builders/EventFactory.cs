@@ -19,9 +19,11 @@ namespace Falsy.NET.Internals.TypeBuilder.Builders
             _delegateRemove = TypeInfo<Delegate>.GetSpecificMethod("Remove", arguments).MethodInfo;
         }
 
-        public static Tuple<EventBuilder, FieldBuilder> BuildEvent(this System.Reflection.Emit.TypeBuilder typeBuilder, DynamicMember node, Type eventHandlerType)
+        public static Tuple<EventBuilder, FieldBuilder> BuildEvent(this System.Reflection.Emit.TypeBuilder typeBuilder, DynamicMember node)
         {
             var eventName = node.Name;
+            var eventHandlerType = node.Type;
+
             var eventHandlerTypes = new[] { eventHandlerType };
 
             var eventBackingField = typeBuilder.BuildField(eventName, eventHandlerType, false);
