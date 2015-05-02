@@ -8,7 +8,7 @@ namespace Falsy.NET.Internals.TypeBuilder.Builders
     {
         public static PropertyBuilder BuildProperty(this System.Reflection.Emit.TypeBuilder typeBuilder, DynamicMember node, MethodBuilder raisePropertyChanged = null)
         {
-            var field = typeBuilder.BuildField(node, false);
+            var field = typeBuilder.BuildField(node);
 
             var methodAttributes = node.IsVirtual ? Factory.VirtPublicProperty : Factory.PublicProperty;
 

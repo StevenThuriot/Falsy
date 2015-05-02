@@ -8,24 +8,19 @@ namespace Falsy.NET.Internals.TypeBuilder.Builders
     {
         public static FieldBuilder BuildField(this System.Reflection.Emit.TypeBuilder typeBuilder, DynamicMember node)
         {
-            return BuildField(typeBuilder, node, node.MemberType == MemberType.Field);
-        }
-
-        public static FieldBuilder BuildField(this System.Reflection.Emit.TypeBuilder typeBuilder, DynamicMember node, bool isPublic)
-        {
             var memberType = node.Type;
             var fieldName = node.Name;
 
             FieldAttributes fieldAttributes;
 
-            if (isPublic)
-            {
-                fieldAttributes = FieldAttributes.Public;
-            }
-            else
+            if (node.MemberType == MemberType.Property)
             {
                 fieldName = "m_" + fieldName;
                 fieldAttributes = FieldAttributes.Private;
+            }
+            else
+            {
+                fieldAttributes = FieldAttributes.Public;
             }
 
             // Generate a field
