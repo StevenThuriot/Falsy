@@ -8,9 +8,35 @@ namespace Falsy.NET.Internals.TypeBuilder
 {
     public abstract class TypeFactory : DynamicObject
     {
-        static IReadOnlyList<DynamicMember> CreateNodes(CallInfo callInfo, IReadOnlyList<object> args, bool objectsAreValues)
+        static IReadOnlyList<Member> CreateValueNodes(CallInfo callInfo, IReadOnlyList<object> args)
         {
-            var result = new List<DynamicMember>();
+            var result = new List<Member>();
+
+            if (callInfo.ArgumentCount != args.Count)
+                if (!args.All(x => x is Member))
+                    throw new NotSupportedException("All arguments must either be named or they must all be Member instances.");
+
+            var argumentNames = callInfo.ArgumentNames;
+
+            for (var i = 0; i < argumentNames.Count; i++)
+            {
+                var argument = args[i];
+
+                var dynamicMember = argument as Member;
+                if (dynamicMember == null)
+                {
+                    var name = argumentNames[i];
+                    dynamicMember = Member.UnknownMember(name, argument);
+                }
+
+                result.Add(dynamicMember);
+            }
+
+            return result;
+        }
+        static IReadOnlyList<MemberDefinition> CreateNodes(CallInfo callInfo, IReadOnlyList<object> args)
+        {
+            var result = new List<MemberDefinition>();
 
             if (callInfo.ArgumentCount != args.Count)
                 throw new NotSupportedException("All arguments must be named.");
@@ -21,36 +47,30 @@ namespace Falsy.NET.Internals.TypeBuilder
             {
                 var argument = args[i];
 
-                var dynamicMember = argument as DynamicMember;
+                var dynamicMember = argument as MemberDefinition;
                 if (dynamicMember == null)
                 {
                     var name = argumentNames[i];
-                    var memberType = MemberType.Property;
 
-                    if (objectsAreValues)
+                    var @delegate = argument as Delegate;
+                    if (@delegate != null)
                     {
-                        if (argument is Delegate)
-                            memberType = MemberType.Method;
-
-                        dynamicMember = DynamicMember.Create(name, (dynamic) argument, memberType, false);
+                        dynamicMember = new MethodMemberDefinition(name, @delegate);
                     }
                     else
                     {
-                        if (argument is Delegate)
+                        var type = argument as Type;
+
+                        if (type == null)
+                            throw new NotSupportedException("Definitions require a type.");
+
+                        if (typeof(Delegate).IsAssignableFrom(type))
                         {
-                            memberType = MemberType.Method;
-                            dynamicMember = DynamicMember.Create(name, (dynamic)argument, memberType, false);
+                            dynamicMember = new EmptyMethodMemberDefinition(name, type);
                         }
                         else
                         {
-                            var type = argument as Type;
-                            if (type == null)
-                                throw new NotSupportedException("Definitions require a type.");
-
-                            if (typeof (Delegate).IsAssignableFrom(type))
-                                memberType = MemberType.Method;
-
-                            dynamicMember = new DynamicMember(name, type, memberType, false);
+                            dynamicMember = new PropertyMemberDefinition(name, type);
                         }
                     }
                 }
@@ -67,8 +87,8 @@ namespace Falsy.NET.Internals.TypeBuilder
 
             public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
             {
-                var nodes = CreateNodes(binder.CallInfo, args, objectsAreValues: true);
-                result = TypeBuilder.CreateTypeInstance(binder.Name, nodes);
+                var nodes = CreateValueNodes(binder.CallInfo, args);
+                result = DynamicTypeBuilder.CreateTypeInstance(binder.Name, nodes);
                 return true;
             }
         }
@@ -132,8 +152,8 @@ namespace Falsy.NET.Internals.TypeBuilder
                     return true;
                 }
 
-                var nodes = CreateNodes(binder.CallInfo, args, objectsAreValues: false);
-                result = TypeBuilder.CreateType(binder.Name, nodes, interfaces: _interfaces, parent: _parent);
+                var nodes = CreateNodes(binder.CallInfo, args);
+                result = DynamicTypeBuilder.CreateType(binder.Name, nodes, interfaces: _interfaces, parent: _parent);
                 return true;
             }
         }

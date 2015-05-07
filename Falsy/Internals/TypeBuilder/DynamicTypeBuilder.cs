@@ -5,13 +5,13 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Threading;
-using Falsy.NET.Internals.TypeBuilder.Builders;
 using Horizon;
+
 using TypeInfo = Horizon.TypeInfo;
 
 namespace Falsy.NET.Internals.TypeBuilder
 {
-    class TypeBuilder
+    class DynamicTypeBuilder
     {
         private const MethodAttributes PublicProperty = MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName;
         private const MethodAttributes VirtPublicProperty = PublicProperty | MethodAttributes.Virtual;
@@ -19,7 +19,7 @@ namespace Falsy.NET.Internals.TypeBuilder
         private static readonly Dictionary<string, Type> _typeCache = new Dictionary<string, Type>();
         private static readonly ModuleBuilder _falsyModule;
 
-        static TypeBuilder()
+        static DynamicTypeBuilder()
         {
             var guid = Guid.NewGuid().ToString("N");
             var assemblyName = new AssemblyName("Falsy_" + guid);
@@ -27,7 +27,7 @@ namespace Falsy.NET.Internals.TypeBuilder
             _falsyModule = assemblyBuilder.DefineDynamicModule("FalsyModule_" + guid);
         }
 
-        internal static dynamic CreateTypeInstance(string typeName, IReadOnlyList<DynamicMember> nodes, Type parent = null)
+        internal static dynamic CreateTypeInstance(string typeName, IReadOnlyList<Member> nodes, Type parent = null)
         {
             Type type;
             if (!_typeCache.TryGetValue(typeName, out type))
@@ -35,14 +35,14 @@ namespace Falsy.NET.Internals.TypeBuilder
 
             // Now we have our type. Let's create an instance from it:
             object instance = TypeInfo.Create(type);
-
-            foreach (var node in nodes.OfType<ICanVisit>())
-                node.Visit(instance);
+            
+            foreach (var node in nodes)
+                node.SetValue(instance);
 
             return instance;
         }
 
-        internal static Type CreateType(string typeName, IReadOnlyList<DynamicMember> nodes, Type parent = null, IEnumerable<Type> interfaces = null)
+        internal static Type CreateType(string typeName, IReadOnlyList<MemberDefinition> nodes, Type parent = null, IEnumerable<Type> interfaces = null)
         {
             //Todo: the nodes need to become builders that can take care of things on their own.
 
@@ -52,7 +52,7 @@ namespace Falsy.NET.Internals.TypeBuilder
 
             var typeBuilder = _falsyModule.DefineType(typeName, TypeAttributes.Public | TypeAttributes.Class);
 
-            List<DynamicMember> members;
+            List<MemberDefinition> members;
 
             if (parent == null)
             {
@@ -84,7 +84,7 @@ namespace Falsy.NET.Internals.TypeBuilder
                 {
                     typeBuilder.AddInterfaceImplementation(@interface);
 
-                    var properties = TypeInfo.Extended.Properties(@interface).Select(x => new DynamicMember(x, true));
+                    var properties = TypeInfo.Extended.Properties(@interface).Select(x => new PropertyMemberDefinition(x.Name, x.MemberType));
                     members = members.Union(properties).ToList();
 
 
@@ -106,16 +106,23 @@ namespace Falsy.NET.Internals.TypeBuilder
                     }
                     else
                     {
-                        members.AddRange(events.Select(x => new DynamicMember(x.Name, x.EventHandlerType, MemberType.Event, false)));
+                        members.AddRange(events.Select(x => new EventMemberDefinition(x.Name, x.EventHandlerType)));
                     }
 
 
-                    var emptyMethods = TypeInfo.Extended.Methods(@interface).Select(method => new EmptyDynamicMethod(method));
+                    var emptyMethods = TypeInfo.Extended.Methods(@interface).Select(method => new EmptyMethodMemberDefinition(method));
                     members.AddRange(emptyMethods);
                 }
             }
-            
-            typeBuilder.Build(members, raisePropertyChanged);
+
+            if (raisePropertyChanged != null)
+            {
+                foreach (var propertyDefinition in members.OfType<PropertyMemberDefinition>())
+                    propertyDefinition.RaisePropertyChanged = raisePropertyChanged;
+            }
+
+            foreach (var member in members)
+                member.Build(typeBuilder);
 
             if (parent != null)
             {

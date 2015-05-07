@@ -2,13 +2,16 @@
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using Falsy.NET.Internals.TypeBuilder.Builders;
 using Horizon;
 
 namespace Falsy.NET.Internals.TypeBuilder
 {
     abstract class MemberDefinition
     {
+        internal const MethodAttributes PublicProperty = MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName;
+        internal const MethodAttributes VirtPublicProperty = PublicProperty | MethodAttributes.Virtual;
+
+
         public readonly bool IsVirtual;
         public readonly string Name;
         public readonly Type MemberType;
@@ -21,8 +24,6 @@ namespace Falsy.NET.Internals.TypeBuilder
         }
 
         public abstract void Build(System.Reflection.Emit.TypeBuilder typeBuilder);
-
-        //public abstract MemberInfo GetBuilder();
     }
 
 
@@ -42,12 +43,12 @@ namespace Falsy.NET.Internals.TypeBuilder
 
     class PropertyMemberDefinition : MemberDefinition
     {
-        private readonly MethodInfo _raisePropertyChanged;
+        public MethodInfo RaisePropertyChanged { get; set; }
 
-        public PropertyMemberDefinition(string name, Type type, bool isVirtual, MethodInfo raisePropertyChanged = null)
+        public PropertyMemberDefinition(string name, Type type, bool isVirtual = true, MethodInfo raisePropertyChanged = null)
             : base(name, type, isVirtual)
         {
-            _raisePropertyChanged = raisePropertyChanged;
+            RaisePropertyChanged = raisePropertyChanged;
         }
 
         public override void Build(System.Reflection.Emit.TypeBuilder typeBuilder)
@@ -57,7 +58,7 @@ namespace Falsy.NET.Internals.TypeBuilder
 
             var field = typeBuilder.DefineField("m_" + memberName, memberType, FieldAttributes.Private);
 
-            var methodAttributes = IsVirtual ? Factory.VirtPublicProperty : Factory.PublicProperty;
+            var methodAttributes = IsVirtual ? VirtPublicProperty : PublicProperty;
 
             // Define the property getter method for our private field.
             var getBuilder = typeBuilder.DefineMethod("get_" + memberName, methodAttributes, memberType, Type.EmptyTypes);
@@ -76,7 +77,7 @@ namespace Falsy.NET.Internals.TypeBuilder
 
             setIL.Emit(OpCodes.Ldarg_0);
 
-            var notifyChanges = _raisePropertyChanged != null;
+            var notifyChanges = RaisePropertyChanged != null;
 
             if (notifyChanges)
             {
@@ -100,7 +101,7 @@ namespace Falsy.NET.Internals.TypeBuilder
             {
                 setIL.Emit(OpCodes.Ldarg_0);
                 setIL.Emit(OpCodes.Ldstr, memberName);
-                setIL.Emit(OpCodes.Call, _raisePropertyChanged);
+                setIL.Emit(OpCodes.Call, RaisePropertyChanged);
             }
 
             setIL.Emit(OpCodes.Ret);
@@ -120,8 +121,8 @@ namespace Falsy.NET.Internals.TypeBuilder
     {
         private readonly Delegate _delegate;
 
-        public MethodMemberDefinition(string name, Type type, bool isVirtual, Delegate @delegate)
-            : base(name, type, isVirtual)
+        public MethodMemberDefinition(string name, Delegate @delegate, bool isVirtual = true)
+            : base(name, @delegate.GetType(), isVirtual)
         {
             _delegate = @delegate;
         }
@@ -166,6 +167,12 @@ namespace Falsy.NET.Internals.TypeBuilder
             : base(name, type, isVirtual)
         {
             ParameterTypes = parameterTypes;
+        }
+
+        public EmptyMethodMemberDefinition(string name, Type type, bool isVirtual = true)
+            : base(name, type, isVirtual)
+        {
+            ParameterTypes = Type.EmptyTypes;
         }
 
         public override void Build(System.Reflection.Emit.TypeBuilder typeBuilder)
@@ -239,13 +246,13 @@ namespace Falsy.NET.Internals.TypeBuilder
 
             var eventHandlerTypes = new[] {eventHandlerType};
 
-            var eventBackingField = typeBuilder.BuildField(eventName, eventHandlerType, false);
+            var eventBackingField = typeBuilder.DefineField(eventName, eventHandlerType, FieldAttributes.Private);
 
             var voidType = typeof (void);
 
             //Combine event
             var add = typeBuilder.DefineMethod("add_" + eventName,
-                                               Factory.VirtPublicProperty |
+                                               VirtPublicProperty |
                                                MethodAttributes.Final |
                                                MethodAttributes.NewSlot,
                                                voidType,
@@ -263,7 +270,7 @@ namespace Falsy.NET.Internals.TypeBuilder
 
             //Remove event
             var remove = typeBuilder.DefineMethod("remove_" + eventName,
-                                                  Factory.VirtPublicProperty |
+                                                  VirtPublicProperty |
                                                   MethodAttributes.Final |
                                                   MethodAttributes.NewSlot,
                                                   voidType,
