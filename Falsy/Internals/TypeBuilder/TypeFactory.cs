@@ -12,21 +12,33 @@ namespace Falsy.NET.Internals.TypeBuilder
         {
             var result = new List<Member>();
 
-            if (callInfo.ArgumentCount != args.Count)
-                if (!args.All(x => x is Member))
-                    throw new NotSupportedException("All arguments must either be named or they must all be Member instances.");
+            int difference;
+            var nameCount = callInfo.ArgumentNames.Count;
+            var argumentCount = args.Count;
+            if (argumentCount != nameCount)
+            {
+                if (nameCount != args.Count(x => !(x is Member)))
+                    throw new NotSupportedException("Unnamed arguments must be MemberDefinition instances.");
+
+                difference = argumentCount - nameCount;
+            }
+            else
+            {
+                difference = 0;
+            }
 
             var argumentNames = callInfo.ArgumentNames;
 
-            for (var i = 0; i < argumentNames.Count; i++)
+            for (var i = argumentCount - 1; i >= 0; i--)
             {
                 var argument = args[i];
 
                 var dynamicMember = argument as Member;
                 if (dynamicMember == null)
                 {
-                    var name = argumentNames[i];
-                    dynamicMember = Member.Unknown(name, argument);
+                    var name = argumentNames[i - difference];
+                    dynamic value = argument;
+                    dynamicMember = Member.Unknown(name, value);
                 }
 
                 result.Add(dynamicMember);
@@ -38,19 +50,32 @@ namespace Falsy.NET.Internals.TypeBuilder
         {
             var result = new List<MemberDefinition>();
 
-            if (callInfo.ArgumentCount != args.Count)
-                throw new NotSupportedException("All arguments must be named.");
+            int difference;
+            var nameCount = callInfo.ArgumentNames.Count;
+            var argumentCount = args.Count;
+
+            if (argumentCount != nameCount)
+            {
+                if (nameCount != args.Count(x => !(x is MemberDefinition)))
+                    throw new NotSupportedException("Unnamed arguments must be MemberDefinition instances.");
+
+                difference = argumentCount - nameCount;
+            }
+            else
+            {
+                difference = 0;
+            }
 
             var argumentNames = callInfo.ArgumentNames;
 
-            for (var i = 0; i < argumentNames.Count; i++)
+            for (var i = argumentCount - 1; i >= 0; i--)
             {
                 var argument = args[i];
 
                 var dynamicMember = argument as MemberDefinition;
                 if (dynamicMember == null)
                 {
-                    var name = argumentNames[i];
+                    var name = argumentNames[i - difference];
 
                     var @delegate = argument as Delegate;
                     if (@delegate != null)
@@ -75,7 +100,7 @@ namespace Falsy.NET.Internals.TypeBuilder
                     }
                 }
 
-                result.Add(dynamicMember);
+                result.Add(dynamicMember);   
             }
 
             return result;

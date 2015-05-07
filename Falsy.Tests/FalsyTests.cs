@@ -4,6 +4,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using Falsy.NET;
+using Falsy.NET.Internals.TypeBuilder;
 using Horizon;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -906,6 +907,68 @@ namespace Falsy.Tests
 	        person.Age = 28;
 
 	        Assert.AreEqual("Steven", person.FirstName);
+	        Assert.AreEqual("Thuriot", person.LastName);
+	        Assert.AreEqual(28, person.Age);
+	    }
+
+	    [TestMethod]
+	    public void FalsyCanCreateTypesWithMembers()
+	    {
+	        NET.Falsy
+	           .Define
+               .PersonWithMembers(
+	                   FirstName: typeof (string),
+	                   LastName: typeof (string),
+	                   Age: typeof (int)
+	            );
+
+	        var person =
+                NET.Falsy
+	               .New
+	               .PersonWithMembers(
+                           Member.Property("FirstName", "Steven"),
+	                       Member.Property("Age", 25)
+	                );
+
+            Assert.IsNotNull((object)person);
+            Assert.AreEqual("Steven", person.FirstName);
+            Assert.IsNull(person.LastName);
+	        Assert.AreEqual(25, person.Age);
+            
+	        person.LastName = "Thuriot";
+	        person.Age = 28;
+
+	        Assert.AreEqual("Thuriot", person.LastName);
+	        Assert.AreEqual(28, person.Age);
+	    }
+
+	    [TestMethod]
+	    public void FalsyCanCreateTypesWithMemberDefinitions()
+	    {
+	        NET.Falsy
+	           .Define
+               .PersonWithMemberDefinitions(
+                       new PropertyMemberDefinition("FirstName", typeof(string)),
+	                   LastName: typeof (string),
+	                   Age: typeof (int)
+	            );
+
+	        var person =
+                NET.Falsy
+	               .New
+                   .PersonWithMemberDefinitions(
+                           Member.Property("Age", 25),
+                           FirstName: "Steven"
+	                );
+
+            Assert.IsNotNull((object)person);
+            Assert.AreEqual("Steven", person.FirstName);
+            Assert.IsNull(person.LastName);
+	        Assert.AreEqual(25, person.Age);
+            
+	        person.LastName = "Thuriot";
+	        person.Age = 28;
+
 	        Assert.AreEqual("Thuriot", person.LastName);
 	        Assert.AreEqual(28, person.Age);
 	    }
