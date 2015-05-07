@@ -18,7 +18,7 @@ namespace Falsy.NET.Internals
 		public override bool TryGetIndex(GetIndexBinder binder, object[] indexes, out object result)
 		{
 			object output;
-			if (TypeInfo<T>.TryGetIndexer(_instance, indexes, out output))
+			if (Info<T>.TryGetIndexer(_instance, indexes, out output))
 			{
 			    if (Reference.IsNotNull(output))
 			    {
@@ -34,7 +34,7 @@ namespace Falsy.NET.Internals
 
 		public override bool TrySetIndex(SetIndexBinder binder, object[] indexes, object value)
 		{
-			return TypeInfo<T>.TrySetIndexer(_instance, indexes, value);
+			return Info<T>.TrySetIndexer(_instance, indexes, value);
 		}
 		
 		public IEnumerator GetEnumerator()

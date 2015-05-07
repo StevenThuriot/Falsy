@@ -81,7 +81,7 @@ namespace Falsy.NET.Internals
         {
             object member;
 
-            if (TypeInfo<T>.TryGetProperty(_instance, binder.Name, out member))
+            if (Info<T>.TryGetProperty(_instance, binder.Name, out member))
             {
                 if (Reference.IsNotNull(member))
                 {
@@ -90,7 +90,7 @@ namespace Falsy.NET.Internals
                     return true;
                 }
             }
-            else if (TypeInfo<T>.TryGetField(_instance, binder.Name, out member))
+            else if (Info<T>.TryGetField(_instance, binder.Name, out member))
             {
                 if (Reference.IsNotNull(member))
                 {
@@ -106,14 +106,14 @@ namespace Falsy.NET.Internals
 
         public override bool TrySetMember(SetMemberBinder binder, object value)
         {
-            return TypeInfo<T>.TrySetProperty(_instance, binder.Name, value) ||
-                   TypeInfo<T>.TrySetField(_instance, binder.Name, value);
+            return Info<T>.TrySetProperty(_instance, binder.Name, value) ||
+                   Info<T>.TrySetField(_instance, binder.Name, value);
         }
 
         public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
         {
             object output;
-            if (TypeInfo<T>.TryCall(_instance, binder, args, out output))
+            if (Info<T>.TryCall(_instance, binder, args, out output))
             {
                 if (Reference.IsNull(output))
                 {

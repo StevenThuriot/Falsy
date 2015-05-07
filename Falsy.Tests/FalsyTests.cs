@@ -1117,7 +1117,7 @@ namespace Falsy.Tests
             var count = 0;
             var handler = new PropertyChangedEventHandler(delegate { count++; });
             
-            IEventCaller caller = TypeInfo.GetEvent((dynamic) person, "PropertyChanged");
+            IEventCaller caller = Info.GetEvent((dynamic) person, "PropertyChanged");
             
             caller.Add(person, handler);
 
@@ -1160,11 +1160,11 @@ namespace Falsy.Tests
                 );
 
             var instance = NET.Falsy.New.TypeWithADelegateAsMethod();
-            bool hasMethod = TypeInfo.HasMethod(instance, "Multiply");
+            bool hasMethod = Info.HasMethod(instance, "Multiply");
 
             Assert.IsTrue(hasMethod);
 
-            IMethodCaller method = TypeInfo.GetSpecificMethod(instance, "Multiply", typeof(int), typeof(int));
+            IMethodCaller method = Info.GetSpecificMethod(instance, "Multiply", typeof(int), typeof(int));
 
             Assert.IsNotNull(method);
             Assert.AreEqual(typeof(int), method.ReturnType);

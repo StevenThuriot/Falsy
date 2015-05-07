@@ -7,7 +7,6 @@ using System.Reflection.Emit;
 using System.Threading;
 using Horizon;
 
-using TypeInfo = Horizon.TypeInfo;
 
 namespace Falsy.NET.Internals.TypeBuilder
 {
@@ -34,7 +33,7 @@ namespace Falsy.NET.Internals.TypeBuilder
                 throw new NotSupportedException("Unknown Falsy type.");
 
             // Now we have our type. Let's create an instance from it:
-            object instance = TypeInfo.Create(type);
+            object instance = Info.Create(type);
             
             foreach (var node in nodes)
                 node.SetValue(instance);
@@ -63,8 +62,8 @@ namespace Falsy.NET.Internals.TypeBuilder
                 typeBuilder.SetParent(parent);
 
 
-                var properties = TypeInfo.Extended.Properties(parent);
-                var fields = TypeInfo.Extended.Fields(parent);
+                var properties = Info.Extended.Properties(parent);
+                var fields = Info.Extended.Fields(parent);
 
                 var names = properties.Select(x => x.Name).Union(fields.Select(x => x.Name)).ToList();
                 members = nodes.Where(x => !names.Contains(x.Name)).ToList();
@@ -84,11 +83,11 @@ namespace Falsy.NET.Internals.TypeBuilder
                 {
                     typeBuilder.AddInterfaceImplementation(@interface);
 
-                    var properties = TypeInfo.Extended.Properties(@interface).Select(x => new PropertyMemberDefinition(x.Name, x.MemberType));
+                    var properties = Info.Extended.Properties(@interface).Select(x => new PropertyMemberDefinition(x.Name, x.MemberType));
                     members = members.Union(properties).ToList();
 
 
-                    var events = TypeInfo.Extended.Events(@interface);
+                    var events = Info.Extended.Events(@interface);
 
                     if (!notifyChanges &&
                         (notifyChanges = typeof(INotifyPropertyChanged).IsAssignableFrom(@interface)))
@@ -110,7 +109,7 @@ namespace Falsy.NET.Internals.TypeBuilder
                     }
 
 
-                    var emptyMethods = TypeInfo.Extended.Methods(@interface).Select(method => new EmptyMethodMemberDefinition(method));
+                    var emptyMethods = Info.Extended.Methods(@interface).Select(method => new EmptyMethodMemberDefinition(method));
                     members.AddRange(emptyMethods);
                 }
             }
@@ -154,7 +153,7 @@ namespace Falsy.NET.Internals.TypeBuilder
             generator.Emit(OpCodes.Ldarg_0);
             generator.Emit(OpCodes.Ldarg_1);
             generator.Emit(OpCodes.Newobj, _createEventArgs.Value);
-            generator.Emit(OpCodes.Callvirt, TypeInfo<ProgressChangedEventHandler>.GetMethod("Invoke").First().MethodInfo);
+            generator.Emit(OpCodes.Callvirt, Info<ProgressChangedEventHandler>.GetMethod("Invoke").First().MethodInfo);
 
             generator.MarkLabel(returnLabel);
             generator.Emit(OpCodes.Ret);
@@ -165,7 +164,7 @@ namespace Falsy.NET.Internals.TypeBuilder
 
         private static void OverrideParentPropertiesForPropertyChanged(System.Reflection.Emit.TypeBuilder typeBuilder, Type parent, MethodInfo raiseEvent)
         {
-            foreach (var propertyInfo in TypeInfo.Extended.Properties(parent))
+            foreach (var propertyInfo in Info.Extended.Properties(parent))
             {
                 var propertySetter = propertyInfo.GetSetMethod();
                 if (propertySetter == null) continue;
@@ -221,17 +220,17 @@ namespace Falsy.NET.Internals.TypeBuilder
         private static readonly Lazy<MethodInfo> _delegateCombine = new Lazy<MethodInfo>(() =>
         {
             var delegateType = typeof(Delegate);
-            return TypeInfo<Delegate>.GetSpecificMethod("Combine", new []{ delegateType, delegateType }).MethodInfo;
+            return Info<Delegate>.GetSpecificMethod("Combine", new []{ delegateType, delegateType }).MethodInfo;
         });
         
         
         private static readonly Lazy<MethodInfo> _delegateRemove = new Lazy<MethodInfo>(() =>
         {
             var delegateType = typeof(Delegate);
-            return TypeInfo<Delegate>.GetSpecificMethod("Remove", new []{ delegateType, delegateType }).MethodInfo;
+            return Info<Delegate>.GetSpecificMethod("Remove", new []{ delegateType, delegateType }).MethodInfo;
         });
         
-        private static readonly Lazy<ConstructorInfo> _createEventArgs = new Lazy<ConstructorInfo>(() => TypeInfo<PropertyChangingEventArgs>.GetConstructor(typeof(string)).ConstructorInfo);
+        private static readonly Lazy<ConstructorInfo> _createEventArgs = new Lazy<ConstructorInfo>(() => Info<PropertyChangingEventArgs>.GetConstructor(typeof(string)).ConstructorInfo);
         
         private static Tuple<EventBuilder, FieldBuilder> GenerateEvent(System.Reflection.Emit.TypeBuilder typeBuilder, IEventCaller @event)
         {

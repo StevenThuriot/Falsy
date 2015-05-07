@@ -230,8 +230,8 @@ namespace Falsy.NET.Internals.TypeBuilder
             var delegateType = typeof (Delegate);
             var arguments = new[] {delegateType, delegateType};
 
-            _delegateCombine = TypeInfo<Delegate>.GetSpecificMethod("Combine", arguments).MethodInfo;
-            _delegateRemove = TypeInfo<Delegate>.GetSpecificMethod("Remove", arguments).MethodInfo;
+            _delegateCombine = Info<Delegate>.GetSpecificMethod("Combine", arguments).MethodInfo;
+            _delegateRemove = Info<Delegate>.GetSpecificMethod("Remove", arguments).MethodInfo;
         }
 
         public EventMemberDefinition(string name, Type type)

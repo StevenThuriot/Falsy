@@ -1,4 +1,6 @@
-﻿namespace Falsy.NET.Internals.TypeBuilder
+﻿using Horizon;
+
+namespace Falsy.NET.Internals.TypeBuilder
 {
     public abstract class Member
     {
@@ -19,7 +21,7 @@
             return new PropertyMember<T>(name, value);
         }
 
-        public static Member UnknownMember<T>(string name, T value)
+        public static Member Unknown<T>(string name, T value)
         {
             return new UnknownMember<T>(name, value);
         }
@@ -47,7 +49,7 @@
 
         public override void SetValue(dynamic instance)
         {
-            Horizon.TypeInfo.SetField(instance, Name, Value);
+            Info.SetField(instance, Name, Value);
         }
     }
 
@@ -60,7 +62,7 @@
 
         public override void SetValue(dynamic instance)
         {
-            Horizon.TypeInfo.SetProperty(instance, Name, Value);
+            Info.SetProperty(instance, Name, Value);
         }
     }
 
@@ -74,7 +76,7 @@
 
         public override void SetValue(dynamic instance)
         {
-            Horizon.TypeInfo.TrySetValue(instance, Name, Value);
+            Info.TrySetValue(instance, Name, Value);
         }
     }
 }

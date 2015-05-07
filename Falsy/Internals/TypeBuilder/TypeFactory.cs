@@ -26,7 +26,7 @@ namespace Falsy.NET.Internals.TypeBuilder
                 if (dynamicMember == null)
                 {
                     var name = argumentNames[i];
-                    dynamicMember = Member.UnknownMember(name, argument);
+                    dynamicMember = Member.Unknown(name, argument);
                 }
 
                 result.Add(dynamicMember);
