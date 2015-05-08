@@ -80,7 +80,7 @@ namespace Falsy.NET.Internals.TypeBuilder
                     var @delegate = argument as Delegate;
                     if (@delegate != null)
                     {
-                        dynamicMember = new MethodMemberDefinition(name, @delegate);
+                        dynamicMember = MemberDefinition.Method(name, @delegate);
                     }
                     else
                     {
@@ -91,11 +91,11 @@ namespace Falsy.NET.Internals.TypeBuilder
 
                         if (typeof(Delegate).IsAssignableFrom(type))
                         {
-                            dynamicMember = new EmptyMethodMemberDefinition(name, type);
+                            dynamicMember = MemberDefinition.EmptyMethod(name, type);
                         }
                         else
                         {
-                            dynamicMember = new PropertyMemberDefinition(name, type);
+                            dynamicMember = MemberDefinition.Property(name, type);
                         }
                     }
                 }

@@ -948,7 +948,7 @@ namespace Falsy.Tests
 	        NET.Falsy
 	           .Define
                .PersonWithMemberDefinitions(
-                       new PropertyMemberDefinition("FirstName", typeof(string)),
+                       MemberDefinition.Property("FirstName", typeof(string)),
 	                   LastName: typeof (string),
 	                   Age: typeof (int)
 	            );

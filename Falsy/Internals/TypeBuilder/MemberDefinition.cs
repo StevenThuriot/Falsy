@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Linq;
 using System.Reflection;
-using System.Reflection.Emit;
 using Horizon;
 
 namespace Falsy.NET.Internals.TypeBuilder
 {
-    abstract class MemberDefinition
+    public abstract class MemberDefinition
     {
         internal const MethodAttributes PublicProperty = MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName;
         internal const MethodAttributes VirtPublicProperty = PublicProperty | MethodAttributes.Virtual;
@@ -23,274 +21,46 @@ namespace Falsy.NET.Internals.TypeBuilder
             IsVirtual = isVirtual;
         }
 
-        public abstract void Build(System.Reflection.Emit.TypeBuilder typeBuilder);
-    }
+        internal abstract void Build(System.Reflection.Emit.TypeBuilder typeBuilder);
 
 
-    class FieldMemberDefinition : MemberDefinition
-    {        
-        public FieldMemberDefinition(string name, Type type) 
-            : base(name, type, false)
+
+
+        public static MemberDefinition Field(string name, Type type)
         {
+            return new FieldMemberDefinition(name, type);
         }
 
-        public override void Build(System.Reflection.Emit.TypeBuilder typeBuilder)
+        public static MemberDefinition Property(string name, Type type, bool isVirtual = true, MethodInfo raisePropertyChanged = null)
         {
-            typeBuilder.DefineField(Name, MemberType, FieldAttributes.Public);
-        }
-    }
-
-
-    class PropertyMemberDefinition : MemberDefinition
-    {
-        public MethodInfo RaisePropertyChanged { get; set; }
-
-        public PropertyMemberDefinition(string name, Type type, bool isVirtual = true, MethodInfo raisePropertyChanged = null)
-            : base(name, type, isVirtual)
-        {
-            RaisePropertyChanged = raisePropertyChanged;
+            return new PropertyMemberDefinition(name, type, isVirtual, raisePropertyChanged);
         }
 
-        public override void Build(System.Reflection.Emit.TypeBuilder typeBuilder)
+        public static MemberDefinition Event(string name, Type type)
         {
-            var memberName = Name;
-            var memberType = MemberType;
-
-            var field = typeBuilder.DefineField("m_" + memberName, memberType, FieldAttributes.Private);
-
-            var methodAttributes = IsVirtual ? VirtPublicProperty : PublicProperty;
-
-            // Define the property getter method for our private field.
-            var getBuilder = typeBuilder.DefineMethod("get_" + memberName, methodAttributes, memberType, Type.EmptyTypes);
-
-            var getIL = getBuilder.GetILGenerator();
-            getIL.Emit(OpCodes.Ldarg_0);
-            getIL.Emit(OpCodes.Ldfld, field);
-            getIL.Emit(OpCodes.Ret);
-
-            var parameterTypes = new[] {memberType};
-
-            // Define the property setter method for our private field.
-            var setBuilder = typeBuilder.DefineMethod("set_" + memberName, methodAttributes, null, parameterTypes);
-
-            var setIL = setBuilder.GetILGenerator();
-
-            setIL.Emit(OpCodes.Ldarg_0);
-
-            var notifyChanges = RaisePropertyChanged != null;
-
-            if (notifyChanges)
-            {
-                setIL.Emit(OpCodes.Ldfld, field);
-                setIL.Emit(OpCodes.Ldarg_1);
-
-                var setFieldLabel = setIL.DefineLabel();
-                setIL.Emit(OpCodes.Bne_Un_S, setFieldLabel);
-
-                setIL.Emit(OpCodes.Ret);
-
-
-                setIL.MarkLabel(setFieldLabel);
-                setIL.Emit(OpCodes.Ldarg_0);
-            }
-
-            setIL.Emit(OpCodes.Ldarg_1);
-            setIL.Emit(OpCodes.Stfld, field);
-
-            if (notifyChanges)
-            {
-                setIL.Emit(OpCodes.Ldarg_0);
-                setIL.Emit(OpCodes.Ldstr, memberName);
-                setIL.Emit(OpCodes.Call, RaisePropertyChanged);
-            }
-
-            setIL.Emit(OpCodes.Ret);
-
-            // Generate a public property
-            var property = typeBuilder.DefineProperty(memberName, PropertyAttributes.None, memberType,
-                                                      parameterTypes);
-
-            // Map our two methods created above to their corresponding behaviors, "get" and "set" respectively. 
-            property.SetGetMethod(getBuilder);
-            property.SetSetMethod(setBuilder);
-        }
-    }
-
-
-    class MethodMemberDefinition : MemberDefinition
-    {
-        private readonly Delegate _delegate;
-
-        public MethodMemberDefinition(string name, Delegate @delegate, bool isVirtual = true)
-            : base(name, @delegate.GetType(), isVirtual)
-        {
-            _delegate = @delegate;
+            return new EventMemberDefinition(name, type);
         }
 
-        public override void Build(System.Reflection.Emit.TypeBuilder typeBuilder)
+        public static MemberDefinition Method(string name, Delegate @delegate, bool isVirtual = true)
         {
-            var name = Name;
-
-            var methodInfo = _delegate.Method;
-            var parameterTypes = methodInfo.GetParameters().Select(x => x.ParameterType).ToArray();
-
-            var methodAttributes = MethodAttributes.Public | MethodAttributes.Final |
-                                   MethodAttributes.HideBySig | MethodAttributes.NewSlot;
-
-            if (IsVirtual)
-                methodAttributes |= MethodAttributes.Virtual;
-
-            var methodBuilder = typeBuilder.DefineMethod(name, methodAttributes, methodInfo.ReturnType, parameterTypes);
-
-            var generator = methodBuilder.GetILGenerator();
-
-            for (var i = 1; i <= parameterTypes.Length; i++)
-                generator.Emit(OpCodes.Ldarg_S, i);
-
-            generator.Emit(OpCodes.Call, methodInfo);
-            generator.Emit(OpCodes.Ret);
-        }
-    }
-
-
-    class EmptyMethodMemberDefinition : MemberDefinition
-    {
-        public Type[] ParameterTypes { get; private set; }
-
-        public EmptyMethodMemberDefinition(IMethodCaller caller, bool isVirtual = true)
-            : base(caller.Name, caller.ReturnType, isVirtual)
-        {
-            ParameterTypes = caller.ParameterTypes.Select(x => x.ParameterType).ToArray();
+            return new MethodMemberDefinition(name, @delegate, isVirtual);
         }
 
-        public EmptyMethodMemberDefinition(string name, Type type, bool isVirtual, Type[] parameterTypes)
-            : base(name, type, isVirtual)
+        public static MemberDefinition EmptyMethod(string name, Type returnType, bool isVirtual = true)
         {
-            ParameterTypes = parameterTypes;
+            return new EmptyMethodMemberDefinition(name, returnType, isVirtual);
         }
 
-        public EmptyMethodMemberDefinition(string name, Type type, bool isVirtual = true)
-            : base(name, type, isVirtual)
+        public static MemberDefinition EmptyMethod(string name, Type returnType, Type[] parameterTypes, bool isVirtual = true)
         {
-            ParameterTypes = Type.EmptyTypes;
+            return new EmptyMethodMemberDefinition(name, returnType, isVirtual, parameterTypes);
         }
 
-        public override void Build(System.Reflection.Emit.TypeBuilder typeBuilder)
+        internal static MemberDefinition EmptyMethod(IMethodCaller caller, bool isVirtual = true)
         {
-            var name = Name;
-            var returnType = MemberType;
-            var parameterTypes = ParameterTypes;
-
-            var methodBuilder = typeBuilder.DefineMethod(name,
-                                                         MethodAttributes.Public | MethodAttributes.Final |
-                                                         MethodAttributes.HideBySig | MethodAttributes.NewSlot |
-                                                         MethodAttributes.Virtual,
-                                                         returnType,
-                                                         parameterTypes);
-
-
-            var generator = methodBuilder.GetILGenerator();
-
-            if (returnType != typeof (void))
-            {
-                if (!returnType.IsValueType)
-                {
-                    generator.Emit(OpCodes.Ldnull);
-                }
-                else if (returnType.IsPrimitive)
-                {
-                    generator.Emit(OpCodes.Ldc_I4_0);
-
-                    //Do we need to manually convert? Seems to work on its own!
-                    //var size = System.Runtime.InteropServices.Marshal.SizeOf(returnType);
-                    //if (size == 8)
-                    //    generator.Emit(OpCodes.Conv_I8);
-                }
-                else
-                {
-                    var local = generator.DeclareLocal(returnType);
-                    generator.Emit(OpCodes.Ldloca_S, local);
-                    generator.Emit(OpCodes.Initobj, returnType);
-                    generator.Emit(OpCodes.Ldloc_0);
-                }
-            }
-
-            generator.Emit(OpCodes.Ret);
-        }
-    }
-
-
-    class EventMemberDefinition : MemberDefinition
-    {
-        private static readonly MethodInfo _delegateCombine;
-        private static readonly MethodInfo _delegateRemove;
-
-        static EventMemberDefinition()
-        {
-            var delegateType = typeof (Delegate);
-            var arguments = new[] {delegateType, delegateType};
-
-            _delegateCombine = Info<Delegate>.GetSpecificMethod("Combine", arguments).MethodInfo;
-            _delegateRemove = Info<Delegate>.GetSpecificMethod("Remove", arguments).MethodInfo;
+            return new EmptyMethodMemberDefinition(caller, isVirtual);
         }
 
-        public EventMemberDefinition(string name, Type type)
-            : base(name, type, false)
-        {
-        }
 
-        public override void Build(System.Reflection.Emit.TypeBuilder typeBuilder)
-        {
-            var eventName = Name;
-            var eventHandlerType = MemberType;
-
-            var eventHandlerTypes = new[] {eventHandlerType};
-
-            var eventBackingField = typeBuilder.DefineField(eventName, eventHandlerType, FieldAttributes.Private);
-
-            var voidType = typeof (void);
-
-            //Combine event
-            var add = typeBuilder.DefineMethod("add_" + eventName,
-                                               VirtPublicProperty |
-                                               MethodAttributes.Final |
-                                               MethodAttributes.NewSlot,
-                                               voidType,
-                                               eventHandlerTypes);
-
-            var generator = add.GetILGenerator();
-            generator.Emit(OpCodes.Ldarg_0);
-            generator.Emit(OpCodes.Ldarg_0);
-            generator.Emit(OpCodes.Ldfld, eventBackingField);
-            generator.Emit(OpCodes.Ldarg_1);
-            generator.Emit(OpCodes.Call, _delegateCombine);
-            generator.Emit(OpCodes.Castclass, eventHandlerType);
-            generator.Emit(OpCodes.Stfld, eventBackingField);
-            generator.Emit(OpCodes.Ret);
-
-            //Remove event
-            var remove = typeBuilder.DefineMethod("remove_" + eventName,
-                                                  VirtPublicProperty |
-                                                  MethodAttributes.Final |
-                                                  MethodAttributes.NewSlot,
-                                                  voidType,
-                                                  eventHandlerTypes);
-
-            generator = remove.GetILGenerator();
-            generator.Emit(OpCodes.Ldarg_0);
-            generator.Emit(OpCodes.Ldarg_0);
-            generator.Emit(OpCodes.Ldfld, eventBackingField);
-            generator.Emit(OpCodes.Ldarg_1);
-            generator.Emit(OpCodes.Call, _delegateRemove);
-            generator.Emit(OpCodes.Castclass, eventHandlerType);
-            generator.Emit(OpCodes.Stfld, eventBackingField);
-            generator.Emit(OpCodes.Ret);
-
-
-            //event
-            var eventBuilder = typeBuilder.DefineEvent(eventName, EventAttributes.None, eventHandlerType);
-            eventBuilder.SetAddOnMethod(add);
-            eventBuilder.SetRemoveOnMethod(remove);
-        }
     }
 }

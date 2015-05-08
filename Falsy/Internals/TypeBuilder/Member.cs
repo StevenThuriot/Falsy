@@ -1,6 +1,4 @@
-﻿using Horizon;
-
-namespace Falsy.NET.Internals.TypeBuilder
+﻿namespace Falsy.NET.Internals.TypeBuilder
 {
     public abstract class Member
     {
@@ -26,10 +24,10 @@ namespace Falsy.NET.Internals.TypeBuilder
             return new UnknownMember<T>(name, value);
         }
 
-        public abstract void SetValue(dynamic instance);
+        internal abstract void SetValue(dynamic instance);
     }
 
-    public abstract class Member<T> : Member
+    abstract class Member<T> : Member
     {
         public readonly T Value;
         
@@ -37,46 +35,6 @@ namespace Falsy.NET.Internals.TypeBuilder
             : base(name)
         {
             Value = value;
-        }
-    }
-
-
-    class FieldMember<T> : Member<T>
-    {
-        public FieldMember(string name, T value) : base(name, value)
-        {
-        }
-
-        public override void SetValue(dynamic instance)
-        {
-            Info.SetField(instance, Name, Value);
-        }
-    }
-
-
-    class PropertyMember<T> : Member<T>
-    {
-        public PropertyMember(string name, T value) : base(name, value)
-        {
-        }
-
-        public override void SetValue(dynamic instance)
-        {
-            Info.SetProperty(instance, Name, Value);
-        }
-    }
-
-
-    class UnknownMember<T> : Member<T>
-    {
-        public UnknownMember(string name, T value)
-            : base(name, value)
-        {
-        }
-
-        public override void SetValue(dynamic instance)
-        {
-            Info.TrySetValue(instance, Name, Value);
         }
     }
 }

@@ -83,7 +83,7 @@ namespace Falsy.NET.Internals.TypeBuilder
                 {
                     typeBuilder.AddInterfaceImplementation(@interface);
 
-                    var properties = Info.Extended.Properties(@interface).Select(x => new PropertyMemberDefinition(x.Name, x.MemberType));
+                    var properties = Info.Extended.Properties(@interface).Select(x => MemberDefinition.Property(x.Name, x.MemberType));
                     members = members.Union(properties).ToList();
 
 
@@ -109,7 +109,7 @@ namespace Falsy.NET.Internals.TypeBuilder
                     }
 
 
-                    var emptyMethods = Info.Extended.Methods(@interface).Select(method => new EmptyMethodMemberDefinition(method));
+                    var emptyMethods = Info.Extended.Methods(@interface).Select(method => MemberDefinition.EmptyMethod(method));
                     members.AddRange(emptyMethods);
                 }
             }
