@@ -1,13 +1,19 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.30501.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Falsy", "Falsy\Falsy.csproj", "{564B6209-4397-4C50-9DBF-A2908FE969E9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Falsy.Tests", "Falsy.Tests\Falsy.Tests.csproj", "{679B1E4B-EC54-4B1A-AD3A-9F2467E60474}"
 EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Horizon", "Horizon\Horizon.shproj", "{659F049F-2F56-4BA3-9009-739704AADB18}"
+EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Horizon\Horizon.projitems*{564b6209-4397-4c50-9dbf-a2908fe969e9}*SharedItemsImports = 4
+		Horizon\Horizon.projitems*{659f049f-2f56-4ba3-9009-739704aadb18}*SharedItemsImports = 13
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU

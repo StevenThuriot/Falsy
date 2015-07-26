@@ -1,3 +1,4 @@
-[submodule "Falsy/Horizon"]
-	path = Falsy/Horizon
+[submodule "Horizon"]
+	path = Horizon
 	url = https://github.com/StevenThuriot/Horizon.git
+	branch = master
