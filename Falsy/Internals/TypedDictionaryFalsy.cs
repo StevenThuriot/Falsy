@@ -17,7 +17,8 @@ namespace Falsy.NET.Internals
         public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
             TValue value;
-            var key = (TKey) (object) binder.Name;
+            TKey key = GetKey(binder.Name);
+
             if (_instance.TryGetValue(key, out value))
             {
                 if (Reference.IsNull(value))
@@ -34,9 +35,20 @@ namespace Falsy.NET.Internals
             return base.TryGetMember(binder, out result);
         }
 
+        static TKey GetKey(string name)
+        {            
+            if (typeof(TKey) == typeof(string))
+            {
+                //Since we know name is a string and so is TKey, we can use C# tricks
+                return __refvalue(__makeref(name), TKey);
+            }
+
+            return (TKey)(object)name;
+        }
+
         public override bool TrySetMember(SetMemberBinder binder, object value)
         {
-            var key = (TKey) (object) binder.Name;
+            TKey key = GetKey(binder.Name);
             _instance[key] = (TValue)value;
             return true;
         }

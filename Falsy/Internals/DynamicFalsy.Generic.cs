@@ -30,7 +30,7 @@ namespace Falsy.NET.Internals
 
             if (ownerType == typeof(string))
             {
-                Falsy = obj => string.IsNullOrEmpty((string)(object)obj);
+                Falsy = obj => string.IsNullOrEmpty(__refvalue(__makeref(obj), string));
             }
             else if (ownerType == typeof(double))
             {
@@ -38,8 +38,8 @@ namespace Falsy.NET.Internals
                         {
                             if (Reference.IsNull(obj)) return true;
 
-                            var value = (double) (object) obj;
-                            return Double.IsNaN(value) || Math.Abs(value) < Double.Epsilon;
+                            var value = __refvalue(__makeref(obj), double);
+                            return double.IsNaN(value) || Math.Abs(value) < double.Epsilon;
                         };
             }
             else if (ownerType == typeof(float))
@@ -48,8 +48,8 @@ namespace Falsy.NET.Internals
                         {
                             if (Reference.IsNull(obj)) return true;
 
-                            var value = (float) (object) obj;
-                            return Single.IsNaN(value) || Math.Abs(value) < Single.Epsilon;
+                            var value = __refvalue(__makeref(obj), float);
+                            return float.IsNaN(value) || Math.Abs(value) < float.Epsilon;
                         };
             }
             else if (ownerType.IsNumeric())
