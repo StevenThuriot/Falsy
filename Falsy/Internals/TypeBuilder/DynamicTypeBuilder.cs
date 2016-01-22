@@ -43,8 +43,6 @@ namespace Falsy.NET.Internals.TypeBuilder
 
         internal static Type CreateType(string typeName, IReadOnlyList<MemberDefinition> nodes, Type parent = null, IEnumerable<Type> interfaces = null)
         {
-            //Todo: the nodes need to become builders that can take care of things on their own.
-
             Type type;
             if (_typeCache.TryGetValue(typeName, out type))
                 return type;
@@ -71,7 +69,7 @@ namespace Falsy.NET.Internals.TypeBuilder
 
             var notifyChanges = false;
             MethodBuilder raisePropertyChanged = null;
-
+            
             if (interfaces != null)
             {
                 var interfaceSet = new HashSet<Type>();
@@ -95,7 +93,9 @@ namespace Falsy.NET.Internals.TypeBuilder
                         foreach (var @event in events)
                         {
                             var tuple = GenerateEvent(typeBuilder, @event);
-                            if (@event.Name != "PropertyChanged") continue;
+
+                            if (@event.Name != "PropertyChanged")
+                                continue;
 
                             var eventBuilder = tuple.Item1;
                             var eventBackingField = tuple.Item2;
@@ -125,7 +125,9 @@ namespace Falsy.NET.Internals.TypeBuilder
 
             if (parent != null)
             {
-                if (raisePropertyChanged != null) OverrideParentPropertiesForPropertyChanged(typeBuilder, parent, raisePropertyChanged);
+                if (raisePropertyChanged != null)
+                    OverrideParentPropertiesForPropertyChanged(typeBuilder, parent, raisePropertyChanged);
+                
                 //TODO: Check if parent is abstract and properties need to be implemented.
             }
 
@@ -167,8 +169,12 @@ namespace Falsy.NET.Internals.TypeBuilder
             foreach (var propertyInfo in Info.Extended.Properties(parent))
             {
                 var propertySetter = propertyInfo.GetSetMethod();
-                if (propertySetter == null) continue;
-                if (!propertySetter.IsVirtual) continue;
+
+                if (propertySetter == null)
+                    continue;
+
+                if (!propertySetter.IsVirtual)
+                    continue;
 
                 var name = propertyInfo.Name;
                 var pb = typeBuilder.DefineProperty(name, PropertyAttributes.None, propertyInfo.MemberType, Type.EmptyTypes);
