@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using Falsy.NET.Internals;
 using Falsy.NET.Internals.TypeBuilder;
@@ -44,18 +43,18 @@ namespace Falsy.NET
         }
 
 
-        private static dynamic InternalFalsify<T>(T instance)
+        static dynamic InternalFalsify<T>(T instance)
         {
             return new DynamicFalsy<T>(instance);
         }
 
-        private static dynamic InternalEnumerableFalsify<T>(T instance)
+        static dynamic InternalEnumerableFalsify<T>(T instance)
             where T : IEnumerable
         {
             return new EnumerableFalsy<T>(instance);
         }
 
-        private static dynamic InternalDictionaryFalsify<T>(T instance)
+        static dynamic InternalDictionaryFalsify<T>(T instance)
             where T : IDictionary
         {
             if (Helper<T>.IsGenericDictionary)
@@ -65,17 +64,8 @@ namespace Falsy.NET
         }
 
 
-
-        private static readonly Lazy<TypeFactory> _newFactory = new Lazy<TypeFactory>(() => new TypeFactory.NewTypeFactory());
-        private static readonly Lazy<TypeFactory> _defineFactory = new Lazy<TypeFactory>(() => new TypeFactory.DefineTypeFactory());
-        public static dynamic Define
-        {
-            get { return _defineFactory.Value; }
-        }
-        public static dynamic New
-        {
-            get { return _newFactory.Value; }
-        }
+        public static dynamic Define => new TypeFactory.DefineTypeFactory();
+        public static dynamic New => new TypeFactory.NewTypeFactory();
 
 
 
@@ -86,7 +76,7 @@ namespace Falsy.NET
 
         static class Helper<T>
         {
-            private static bool? _isGenericDictionary;
+            static bool? _isGenericDictionary;
             public static bool IsGenericDictionary
             {
                 get

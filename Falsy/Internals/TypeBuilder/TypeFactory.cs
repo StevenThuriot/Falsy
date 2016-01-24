@@ -177,8 +177,18 @@ namespace Falsy.NET.Internals.TypeBuilder
                     return true;
                 }
 
-                var nodes = CreateNodes(binder.CallInfo, args);
-                result = DynamicTypeBuilder.CreateType(binder.Name, nodes, interfaces: _interfaces, parent: _parent);
+                try
+                {
+                    var nodes = CreateNodes(binder.CallInfo, args);
+                    result = DynamicTypeBuilder.CreateType(binder.Name, nodes, interfaces: _interfaces, parent: _parent);
+                }
+                finally
+                {
+                    _interfaces?.Clear();
+                    _parent = null;
+                }
+
+
                 return true;
             }
         }
