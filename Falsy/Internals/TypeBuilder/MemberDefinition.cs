@@ -61,6 +61,9 @@ namespace Falsy.NET.Internals.TypeBuilder
             return new EmptyMethodMemberDefinition(caller, isVirtual);
         }
 
-
+        internal static MemberDefinition Property(IPropertyCaller caller, bool isVirtual = true, MethodInfo raisePropertyChanged = null)
+        {
+            return Property(caller.Name, caller.MemberType, isVirtual, raisePropertyChanged);
+        }
     }
 }

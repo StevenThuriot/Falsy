@@ -55,6 +55,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="AbstractParent.cs" />
     <Compile Include="FalsyTests.cs" />
     <Compile Include="IPerson.cs" />
     <Compile Include="Parent.cs" />

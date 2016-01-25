@@ -1239,6 +1239,38 @@ namespace Falsy.Tests
             Assert.AreEqual(15, multiplication);
         }
 
+        [TestMethod]
+        public void FalsyCanInheritAnAbstractParent()
+        {
+            NET.Falsy
+               .Define
+               .InheritFrom(typeof(AbstractParent))
+               .ImplementedAbstractChild(
+                    MemberDefinition.Property("FirstName", typeof(string), isVirtual: false)
+                );
+
+            var child = NET.Falsy.New.ImplementedAbstractChild();
+
+            var hasProperty = Info.HasProperty(child, "FirstName");
+            Assert.IsTrue(hasProperty);
+
+            hasProperty = Info.HasProperty(child, "Number");
+            Assert.IsTrue(hasProperty);
+
+            string name = child.FirstName;
+            Assert.IsNull(name);
+
+            child.FirstName = "Jos";
+            name = child.FirstName;
+            Assert.AreEqual("Jos", name);
+
+            int number = child.Number;
+            Assert.AreEqual(default(int), number);
+
+            child.Number = 5;
+            number = child.Number;
+            Assert.AreEqual(number, 5);
+        }
 
         //Note to self, when declaring this method as a variable inside our previous method, a System.MethodAccessException is thrown.
         //Remember that our new method lives inside a dynamic assembly and needs access to this method to be able to call it.

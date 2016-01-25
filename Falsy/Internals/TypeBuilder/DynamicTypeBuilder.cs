@@ -59,12 +59,27 @@ namespace Falsy.NET.Internals.TypeBuilder
             {
                 typeBuilder.SetParent(parent);
 
-
                 var properties = Info.Extended.Properties(parent);
                 var fields = Info.Extended.Fields(parent);
 
                 var names = properties.Select(x => x.Name).Union(fields.Select(x => x.Name)).ToList();
                 members = nodes.Where(x => !names.Contains(x.Name)).ToList();
+
+                if (parent.IsAbstract)
+                {
+                    //We need to implement these ourselves
+                    var abstractProperties = properties.Where(x => (x.PropertyInfo.CanRead && x.PropertyInfo.GetGetMethod().IsAbstract) || (x.PropertyInfo.CanWrite && x.PropertyInfo.GetSetMethod().IsAbstract))
+                                                       .Select(x => MemberDefinition.Property(x, isVirtual: true));
+
+                    members.AddRange(abstractProperties);
+
+                    var abstractMethods = Info.Extended.Methods(parent)
+                                              .Where(x => x.MethodInfo.IsAbstract)
+                                              .Where(x => !nodes.Any(n => n.Name == x.Name))
+                                              .Select(x => MemberDefinition.EmptyMethod(x, isVirtual: true));
+
+                    members.AddRange(abstractMethods);
+                }
             }
 
             var notifyChanges = false;
@@ -127,8 +142,6 @@ namespace Falsy.NET.Internals.TypeBuilder
             {
                 if (raisePropertyChanged != null)
                     OverrideParentPropertiesForPropertyChanged(typeBuilder, parent, raisePropertyChanged);
-                
-                //TODO: Check if parent is abstract and properties need to be implemented.
             }
 
             // Generate our type and cache it.

@@ -32,12 +32,9 @@ namespace Falsy.NET.Internals
 			return false;
 		}
 
-		public override bool TrySetIndex(SetIndexBinder binder, object[] indexes, object value)
-		{
-			return Info<T>.TrySetIndexer(_instance, indexes, value);
-		}
-		
-		public IEnumerator GetEnumerator()
+        public override bool TrySetIndex(SetIndexBinder binder, object[] indexes, object value) => Info<T>.TrySetIndexer(_instance, indexes, value);
+
+        public IEnumerator GetEnumerator()
 		{
 			var enumerator = (from dynamic item in _instance
 			                  select Falsy.Falsify(item))
