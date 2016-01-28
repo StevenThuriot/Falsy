@@ -7,35 +7,39 @@ namespace Falsy.NET.Internals.TypeBuilder
 {
     class MethodMemberDefinition : MemberDefinition
     {
-        private readonly Delegate _delegate;
+        const MethodAttributes _defaultMethodAttributes = MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot;
+        readonly MethodInfo _methodInfo;
 
         public MethodMemberDefinition(string name, Delegate @delegate, bool isVirtual)
-            : base(name, @delegate.GetType(), isVirtual)
+            : this(name, @delegate.Method, isVirtual)
         {
-            _delegate = @delegate;
+        }
+
+        public MethodMemberDefinition(string name, MethodInfo methodInfo, bool isVirtual)
+            : base(name, methodInfo.ReturnType, isVirtual)
+        {
+            _methodInfo = methodInfo;
         }
 
         internal override void Build(System.Reflection.Emit.TypeBuilder typeBuilder)
         {
             var name = Name;
+            
+            var parameterTypes = _methodInfo.GetParameters().Select(x => x.ParameterType).ToArray();
 
-            var methodInfo = _delegate.Method;
-            var parameterTypes = methodInfo.GetParameters().Select(x => x.ParameterType).ToArray();
-
-            var methodAttributes = MethodAttributes.Public | MethodAttributes.Final |
-                                   MethodAttributes.HideBySig | MethodAttributes.NewSlot;
+            var methodAttributes = _defaultMethodAttributes;
 
             if (IsVirtual)
                 methodAttributes |= MethodAttributes.Virtual;
 
-            var methodBuilder = typeBuilder.DefineMethod(name, methodAttributes, methodInfo.ReturnType, parameterTypes);
+            var methodBuilder = typeBuilder.DefineMethod(name, methodAttributes, _methodInfo.ReturnType, parameterTypes);
 
             var generator = methodBuilder.GetILGenerator();
 
             for (var i = 1; i <= parameterTypes.Length; i++)
                 generator.Emit(OpCodes.Ldarg_S, i);
 
-            generator.Emit(OpCodes.Call, methodInfo);
+            generator.Emit(OpCodes.Call, _methodInfo);
             generator.Emit(OpCodes.Ret);
         }
     }

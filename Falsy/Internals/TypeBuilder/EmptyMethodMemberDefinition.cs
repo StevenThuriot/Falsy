@@ -8,6 +8,10 @@ namespace Falsy.NET.Internals.TypeBuilder
 {
     class EmptyMethodMemberDefinition : MemberDefinition
     {
+        private const MethodAttributes _defaultMethodAttributes = MethodAttributes.Public | MethodAttributes.Final |
+                                                                  MethodAttributes.HideBySig | MethodAttributes.NewSlot |
+                                                                  MethodAttributes.Virtual;
+
         public Type[] ParameterTypes { get; private set; }
 
         public EmptyMethodMemberDefinition(IMethodCaller caller, bool isVirtual)
@@ -34,13 +38,7 @@ namespace Falsy.NET.Internals.TypeBuilder
             var returnType = MemberType;
             var parameterTypes = ParameterTypes;
 
-            var methodBuilder = typeBuilder.DefineMethod(name,
-                                                         MethodAttributes.Public | MethodAttributes.Final |
-                                                         MethodAttributes.HideBySig | MethodAttributes.NewSlot |
-                                                         MethodAttributes.Virtual,
-                                                         returnType,
-                                                         parameterTypes);
-
+            var methodBuilder = typeBuilder.DefineMethod(name, _defaultMethodAttributes, returnType, parameterTypes);
 
             var generator = methodBuilder.GetILGenerator();
 

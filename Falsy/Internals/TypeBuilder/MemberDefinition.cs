@@ -23,47 +23,20 @@ namespace Falsy.NET.Internals.TypeBuilder
 
         internal abstract void Build(System.Reflection.Emit.TypeBuilder typeBuilder);
 
+        public static MemberDefinition Field(string name, Type type) => new FieldMemberDefinition(name, type);
 
+        public static MemberDefinition Property(string name, Type type, bool isVirtual = true, MethodInfo raisePropertyChanged = null) => new PropertyMemberDefinition(name, type, isVirtual, raisePropertyChanged);
 
+        public static MemberDefinition Event(string name, Type type) => new EventMemberDefinition(name, type);
 
-        public static MemberDefinition Field(string name, Type type)
-        {
-            return new FieldMemberDefinition(name, type);
-        }
+        public static MemberDefinition Method(string name, Delegate @delegate, bool isVirtual = true) => new MethodMemberDefinition(name, @delegate, isVirtual);
 
-        public static MemberDefinition Property(string name, Type type, bool isVirtual = true, MethodInfo raisePropertyChanged = null)
-        {
-            return new PropertyMemberDefinition(name, type, isVirtual, raisePropertyChanged);
-        }
+        public static MemberDefinition EmptyMethod(string name, Type returnType, bool isVirtual = true) => new EmptyMethodMemberDefinition(name, returnType, isVirtual);
 
-        public static MemberDefinition Event(string name, Type type)
-        {
-            return new EventMemberDefinition(name, type);
-        }
+        public static MemberDefinition EmptyMethod(string name, Type returnType, Type[] parameterTypes, bool isVirtual = true) => new EmptyMethodMemberDefinition(name, returnType, isVirtual, parameterTypes);
 
-        public static MemberDefinition Method(string name, Delegate @delegate, bool isVirtual = true)
-        {
-            return new MethodMemberDefinition(name, @delegate, isVirtual);
-        }
+        internal static MemberDefinition EmptyMethod(IMethodCaller caller, bool isVirtual = true) => new EmptyMethodMemberDefinition(caller, isVirtual);
 
-        public static MemberDefinition EmptyMethod(string name, Type returnType, bool isVirtual = true)
-        {
-            return new EmptyMethodMemberDefinition(name, returnType, isVirtual);
-        }
-
-        public static MemberDefinition EmptyMethod(string name, Type returnType, Type[] parameterTypes, bool isVirtual = true)
-        {
-            return new EmptyMethodMemberDefinition(name, returnType, isVirtual, parameterTypes);
-        }
-
-        internal static MemberDefinition EmptyMethod(IMethodCaller caller, bool isVirtual = true)
-        {
-            return new EmptyMethodMemberDefinition(caller, isVirtual);
-        }
-
-        internal static MemberDefinition Property(IPropertyCaller caller, bool isVirtual = true, MethodInfo raisePropertyChanged = null)
-        {
-            return Property(caller.Name, caller.MemberType, isVirtual, raisePropertyChanged);
-        }
+        internal static MemberDefinition Property(IPropertyCaller caller, bool isVirtual = true, MethodInfo raisePropertyChanged = null) => Property(caller.Name, caller.MemberType, isVirtual, raisePropertyChanged);
     }
 }

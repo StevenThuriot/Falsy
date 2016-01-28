@@ -7,8 +7,8 @@ namespace Falsy.NET.Internals.TypeBuilder
 {
     class EventMemberDefinition : MemberDefinition
     {
-        private static readonly MethodInfo _delegateCombine;
-        private static readonly MethodInfo _delegateRemove;
+        static readonly MethodInfo _delegateCombine;
+        static readonly MethodInfo _delegateRemove;
 
         static EventMemberDefinition()
         {

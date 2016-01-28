@@ -46,6 +46,7 @@ namespace Falsy.NET.Internals.TypeBuilder
 
             return result;
         }
+
         static IReadOnlyList<MemberDefinition> CreateNodes(CallInfo callInfo, IReadOnlyList<object> args)
         {
             var result = new List<MemberDefinition>();
@@ -117,6 +118,7 @@ namespace Falsy.NET.Internals.TypeBuilder
                 return true;
             }
         }
+
         public class DefineTypeFactory : TypeFactory
         {
             private HashSet<Type> _interfaces;
