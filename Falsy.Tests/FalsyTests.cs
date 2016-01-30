@@ -879,39 +879,151 @@ namespace Falsy.Tests
 			}
 		}
 
-	    [TestMethod]
-	    public void FalsyCanCreateTypes()
-	    {
-	        NET.Falsy
-	           .Define
-	           .Person(
-	                   FirstName: typeof (string),
-	                   LastName: typeof (string),
-	                   Age: typeof (int)
-	            );
+        [TestMethod]
+        public void FalsyCanCreateTypes()
+        {
+            Type type = NET.Falsy
+                           .Define
+                           .Person(
+                                   FirstName: typeof(string),
+                                   LastName: typeof(string),
+                                   Age: typeof(int)
+                            );
 
-	        var person =
+            Assert.IsFalse(type.IsSealed);
+            Assert.IsFalse(type.IsSerializable);
+
+            var person =
                 NET.Falsy
-	               .New
-	               .Person(
-	                       Age: 25
-	                );
+                   .New
+                   .Person(
+                           Age: 25
+                    );
 
-	        Assert.IsNotNull((object) person);
+            Assert.IsNotNull((object)person);
             Assert.IsNull(person.FirstName);
             Assert.IsNull(person.LastName);
-	        Assert.AreEqual(25, person.Age);
-            
-	        person.FirstName = "Steven";
-	        person.LastName = "Thuriot";
-	        person.Age = 28;
+            Assert.AreEqual(25, person.Age);
 
-	        Assert.AreEqual("Steven", person.FirstName);
-	        Assert.AreEqual("Thuriot", person.LastName);
-	        Assert.AreEqual(28, person.Age);
-	    }
+            person.FirstName = "Steven";
+            person.LastName = "Thuriot";
+            person.Age = 28;
 
-	    [TestMethod]
+            Assert.AreEqual("Steven", person.FirstName);
+            Assert.AreEqual("Thuriot", person.LastName);
+            Assert.AreEqual(28, person.Age);
+        }
+
+        [TestMethod]
+        public void FalsyCanCreateSealedTypes()
+        {
+            Type type = NET.Falsy
+                           .Define
+                           .Sealed()
+                           .SealedPerson(
+                                   FirstName: typeof(string),
+                                   LastName: typeof(string),
+                                   Age: typeof(int)
+                            );
+
+            Assert.IsTrue(type.IsSealed);
+            Assert.IsFalse(type.IsSerializable);
+
+            var person =
+                NET.Falsy
+                   .New
+                   .SealedPerson(
+                           Age: 25
+                    );
+
+            Assert.IsNotNull((object)person);
+            Assert.IsNull(person.FirstName);
+            Assert.IsNull(person.LastName);
+            Assert.AreEqual(25, person.Age);
+
+            person.FirstName = "Steven";
+            person.LastName = "Thuriot";
+            person.Age = 28;
+
+            Assert.AreEqual("Steven", person.FirstName);
+            Assert.AreEqual("Thuriot", person.LastName);
+            Assert.AreEqual(28, person.Age);
+        }
+
+        [TestMethod]
+        public void FalsyCanCreateSerializableTypes()
+        {
+            Type type = NET.Falsy
+                           .Define
+                           .Serializable()
+                           .SerializablePerson(
+                                   FirstName: typeof(string),
+                                   LastName: typeof(string),
+                                   Age: typeof(int)
+                            );
+
+            Assert.IsFalse(type.IsSealed);
+            Assert.IsTrue(type.IsSerializable);
+
+            var person =
+                NET.Falsy
+                   .New
+                   .SerializablePerson(
+                           Age: 25
+                    );
+
+            Assert.IsNotNull((object)person);
+            Assert.IsNull(person.FirstName);
+            Assert.IsNull(person.LastName);
+            Assert.AreEqual(25, person.Age);
+
+            person.FirstName = "Steven";
+            person.LastName = "Thuriot";
+            person.Age = 28;
+
+            Assert.AreEqual("Steven", person.FirstName);
+            Assert.AreEqual("Thuriot", person.LastName);
+            Assert.AreEqual(28, person.Age);
+        }
+
+        [TestMethod]
+        public void FalsyCanCreateSerializableSealedTypes()
+        {
+            Type type = NET.Falsy
+                           .Define
+                           .Serializable()
+                           .Sealed()
+                           .SerializableSealedPerson(
+                                   FirstName: typeof(string),
+                                   LastName: typeof(string),
+                                   Age: typeof(int)
+                            );
+
+            Assert.IsTrue(type.IsSealed);
+            Assert.IsTrue(type.IsSerializable);
+
+            var person =
+                NET.Falsy
+                   .New
+                   .SerializableSealedPerson(
+                           Age: 25
+                    );
+
+            Assert.IsNotNull((object)person);
+            Assert.IsNull(person.FirstName);
+            Assert.IsNull(person.LastName);
+            Assert.AreEqual(25, person.Age);
+
+            person.FirstName = "Steven";
+            person.LastName = "Thuriot";
+            person.Age = 28;
+
+            Assert.AreEqual("Steven", person.FirstName);
+            Assert.AreEqual("Thuriot", person.LastName);
+            Assert.AreEqual(28, person.Age);
+        }
+
+        [TestMethod]
 	    public void FalsyCanCreateTypesWithMembers()
 	    {
 	        NET.Falsy

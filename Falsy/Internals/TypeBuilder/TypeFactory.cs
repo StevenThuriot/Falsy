@@ -121,8 +121,10 @@ namespace Falsy.NET.Internals.TypeBuilder
 
         public class DefineTypeFactory : TypeFactory
         {
-            private HashSet<Type> _interfaces;
-            private Type _parent;
+            HashSet<Type> _interfaces;
+            Type _parent;
+            bool _serializable;
+            bool _sealed;
 
             internal DefineTypeFactory() { }
 
@@ -130,59 +132,86 @@ namespace Falsy.NET.Internals.TypeBuilder
             {
                 var binderName = binder.Name.ToUpperInvariant();
 
-                if ("WITHINTERFACE" == binderName)
+                switch (binderName)
                 {
-                    var types = args.Cast<Type>();
+                    case "WITHINTERFACE":
+                        MarkInterface(args);
 
-                    if (_interfaces == null)
-                    {
-                        _interfaces = new HashSet<Type>(types);
-                    }
-                    else
-                    {
-                        foreach (var type in types)
-                            _interfaces.Add(type);
-                    }
-                    
-                    result = this;
-                    return true;
+                        result = this;
+                        break;
+
+                    case "NOTIFYCHANGES":
+                        MarkNotifiable();
+
+                        result = this;
+                        break;
+
+                    case "INHERITFROM":
+                        SetParent(args);
+
+                        result = this;
+                        break;
+
+                    case "SEALED":
+                        _sealed = true;
+
+                        result = this;
+                        break;
+
+                    case "SERIALIZABLE":
+                        _serializable = true;
+
+                        result = this;
+                        break;
+
+
+                    default:
+                        var nodes = CreateNodes(binder.CallInfo, args);
+                        result = DynamicTypeBuilder.CreateType(binder.Name, nodes, serializable: _serializable, @sealed: _sealed, interfaces: _interfaces, parent: _parent);
+                        break;
                 }
 
-                if ("NOTIFYCHANGES" == binderName)
-                {
-                    var propertyChangedInterface = typeof(INotifyPropertyChanged);
+                return true;
+            }
 
-                    if (_interfaces == null)
-                    {
-                        _interfaces = new HashSet<Type>
+            void SetParent(object[] args)
+            {
+                if (args.Length != 1)
+                    throw new NotSupportedException("You can only have 1 parent.");
+
+                _parent = (Type)args[0];
+            }
+
+            void MarkNotifiable()
+            {
+                var propertyChangedInterface = typeof(INotifyPropertyChanged);
+
+                if (_interfaces == null)
+                {
+                    _interfaces = new HashSet<Type>
                                       {
                                           propertyChangedInterface
                                       };
-                    }
-                    else
-                    {
-                        _interfaces.Add(propertyChangedInterface);
-                    }
-
-                    result = this;
-                    return true;
                 }
-
-                if ("INHERITFROM" == binderName)
+                else
                 {
-                    if (args.Length != 1)
-                        throw new NotSupportedException("You can only have 1 parent.");
-
-                    _parent = (Type) args[0];
-
-                    result = this;
-                    return true;
+                    _interfaces.Add(propertyChangedInterface);
                 }
+            }
 
-                var nodes = CreateNodes(binder.CallInfo, args);
-                result = DynamicTypeBuilder.CreateType(binder.Name, nodes, interfaces: _interfaces, parent: _parent);
+            void MarkInterface(object[] args)
+            {
+                var types = args.Cast<Type>();
 
-                return true;
+                if (_interfaces == null)
+                {
+                    _interfaces = new HashSet<Type>(types);
+                }
+                else
+                {
+                    foreach (var type in types)
+                        _interfaces.Add(type);
+                }
             }
         }
     }

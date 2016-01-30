@@ -14,7 +14,7 @@ namespace Falsy.NET.Internals.TypeBuilder
     {
         private const MethodAttributes PublicProperty = MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName;
         private const MethodAttributes VirtPublicProperty = PublicProperty | MethodAttributes.Virtual;
-
+        private const TypeAttributes ClassTypeAttributes = TypeAttributes.Public | TypeAttributes.Class;
         private static readonly Dictionary<string, Type> _typeCache = new Dictionary<string, Type>();
         private static readonly ModuleBuilder _falsyModule;
 
@@ -41,13 +41,21 @@ namespace Falsy.NET.Internals.TypeBuilder
             return instance;
         }
 
-        internal static Type CreateType(string typeName, IReadOnlyList<MemberDefinition> nodes, Type parent = null, IEnumerable<Type> interfaces = null)
+        internal static Type CreateType(string typeName, IReadOnlyList<MemberDefinition> nodes, bool serializable = false, bool @sealed = false, Type parent = null, IEnumerable<Type> interfaces = null)
         {
             Type type;
             if (_typeCache.TryGetValue(typeName, out type))
                 return type;
 
-            var typeBuilder = _falsyModule.DefineType(typeName, TypeAttributes.Public | TypeAttributes.Class);
+            var typeAttributes = ClassTypeAttributes;
+
+            if (@sealed)
+                typeAttributes |= TypeAttributes.Sealed;
+
+            if (serializable)
+                typeAttributes |= TypeAttributes.Serializable;
+
+            var typeBuilder = _falsyModule.DefineType(typeName, typeAttributes);
 
             List<MemberDefinition> members;
 
