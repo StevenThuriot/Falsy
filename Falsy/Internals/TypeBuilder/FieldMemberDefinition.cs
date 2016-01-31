@@ -1,18 +1,19 @@
 using System;
 using System.Reflection;
+using System.Reflection.Emit;
 
 namespace Falsy.NET.Internals.TypeBuilder
 {
-    class FieldMemberDefinition : MemberDefinition
+    class FieldMemberDefinition : MemberDefinition<FieldBuilder>
     {        
         public FieldMemberDefinition(string name, Type type) 
             : base(name, type, false)
         {
         }
 
-        internal override void Build(System.Reflection.Emit.TypeBuilder typeBuilder)
+        internal override FieldBuilder Build(System.Reflection.Emit.TypeBuilder typeBuilder)
         {
-            typeBuilder.DefineField(Name, MemberType, FieldAttributes.Public);
+            return typeBuilder.DefineField(Name, MemberType, FieldAttributes.Public);
         }
     }
 }

@@ -5,7 +5,7 @@ using Horizon;
 
 namespace Falsy.NET.Internals.TypeBuilder
 {
-    class EventMemberDefinition : MemberDefinition
+    class EventMemberDefinition : MemberDefinition<EventBuilder>
     {
         static readonly MethodInfo _delegateCombine;
         static readonly MethodInfo _delegateRemove;
@@ -24,7 +24,7 @@ namespace Falsy.NET.Internals.TypeBuilder
         {
         }
 
-        internal override void Build(System.Reflection.Emit.TypeBuilder typeBuilder)
+        internal override EventBuilder Build(System.Reflection.Emit.TypeBuilder typeBuilder)
         {
             var eventName = Name;
             var eventHandlerType = MemberType;
@@ -76,6 +76,8 @@ namespace Falsy.NET.Internals.TypeBuilder
             var eventBuilder = typeBuilder.DefineEvent(eventName, EventAttributes.None, eventHandlerType);
             eventBuilder.SetAddOnMethod(add);
             eventBuilder.SetRemoveOnMethod(remove);
+
+            return eventBuilder;
         }
     }
 }

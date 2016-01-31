@@ -6,7 +6,7 @@ using Horizon;
 
 namespace Falsy.NET.Internals.TypeBuilder
 {
-    class EmptyMethodMemberDefinition : MemberDefinition
+    class EmptyMethodMemberDefinition : MemberDefinition<MethodBuilder>
     {
         private const MethodAttributes _defaultMethodAttributes = MethodAttributes.Public | MethodAttributes.Final |
                                                                   MethodAttributes.HideBySig | MethodAttributes.NewSlot |
@@ -32,13 +32,13 @@ namespace Falsy.NET.Internals.TypeBuilder
             ParameterTypes = Type.EmptyTypes;
         }
 
-        internal override void Build(System.Reflection.Emit.TypeBuilder typeBuilder)
+        internal override MethodBuilder Build(System.Reflection.Emit.TypeBuilder typeBuilder)
         {
             var name = Name;
             var returnType = MemberType;
             var parameterTypes = ParameterTypes;
 
-            var methodBuilder = typeBuilder.DefineMethod(name, _defaultMethodAttributes, returnType, parameterTypes);
+            MethodBuilder methodBuilder = typeBuilder.DefineMethod(name, _defaultMethodAttributes, returnType, parameterTypes);
 
             var generator = methodBuilder.GetILGenerator();
 
@@ -67,6 +67,8 @@ namespace Falsy.NET.Internals.TypeBuilder
             }
 
             generator.Emit(OpCodes.Ret);
+
+            return methodBuilder;
         }
     }
 }

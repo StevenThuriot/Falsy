@@ -4,7 +4,7 @@ using System.Reflection.Emit;
 
 namespace Falsy.NET.Internals.TypeBuilder
 {
-    class PropertyMemberDefinition : MemberDefinition
+    class PropertyMemberDefinition : MemberDefinition<PropertyBuilder>
     {
         public MethodInfo RaisePropertyChanged { get; set; }
 
@@ -14,7 +14,7 @@ namespace Falsy.NET.Internals.TypeBuilder
             RaisePropertyChanged = raisePropertyChanged;
         }
 
-        internal override void Build(System.Reflection.Emit.TypeBuilder typeBuilder)
+        internal override PropertyBuilder Build(System.Reflection.Emit.TypeBuilder typeBuilder)
         {
             var memberName = Name;
             var memberType = MemberType;
@@ -76,6 +76,8 @@ namespace Falsy.NET.Internals.TypeBuilder
             // Map our two methods created above to their corresponding behaviors, "get" and "set" respectively. 
             property.SetGetMethod(getBuilder);
             property.SetSetMethod(setBuilder);
+
+            return property;
         }
     }
 }

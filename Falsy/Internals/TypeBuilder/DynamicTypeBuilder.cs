@@ -10,13 +10,13 @@ using Horizon;
 
 namespace Falsy.NET.Internals.TypeBuilder
 {
-    class DynamicTypeBuilder
+    static class DynamicTypeBuilder
     {
-        private const MethodAttributes PublicProperty = MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName;
-        private const MethodAttributes VirtPublicProperty = PublicProperty | MethodAttributes.Virtual;
-        private const TypeAttributes ClassTypeAttributes = TypeAttributes.Public | TypeAttributes.Class;
-        private static readonly Dictionary<string, Type> _typeCache = new Dictionary<string, Type>();
-        private static readonly ModuleBuilder _falsyModule;
+        const MethodAttributes PublicProperty = MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName;
+        const MethodAttributes VirtPublicProperty = PublicProperty | MethodAttributes.Virtual;
+        const TypeAttributes ClassTypeAttributes = TypeAttributes.Public | TypeAttributes.Class;
+        static readonly Dictionary<string, Type> _typeCache = new Dictionary<string, Type>();
+        internal static readonly ModuleBuilder _falsyModule;
 
         static DynamicTypeBuilder()
         {
@@ -26,7 +26,7 @@ namespace Falsy.NET.Internals.TypeBuilder
             _falsyModule = assemblyBuilder.DefineDynamicModule("FalsyModule_" + guid);
         }
 
-        internal static dynamic CreateTypeInstance(string typeName, IReadOnlyList<Member> nodes, Type parent = null)
+        public static dynamic CreateTypeInstance(string typeName, IReadOnlyList<Member> nodes)
         {
             Type type;
             if (!_typeCache.TryGetValue(typeName, out type))
@@ -41,7 +41,7 @@ namespace Falsy.NET.Internals.TypeBuilder
             return instance;
         }
 
-        internal static Type CreateType(string typeName, IReadOnlyList<MemberDefinition> nodes, bool serializable = false, bool @sealed = false, Type parent = null, IEnumerable<Type> interfaces = null)
+        public static Type CreateType(string typeName, IReadOnlyList<IMemberDefinition> nodes, bool serializable = false, bool @sealed = false, Type parent = null, IEnumerable<Type> interfaces = null)
         {
             Type type;
             if (_typeCache.TryGetValue(typeName, out type))
@@ -57,7 +57,7 @@ namespace Falsy.NET.Internals.TypeBuilder
 
             var typeBuilder = _falsyModule.DefineType(typeName, typeAttributes);
 
-            List<MemberDefinition> members;
+            List<IMemberDefinition> members;
 
             if (parent == null)
             {
@@ -157,7 +157,9 @@ namespace Falsy.NET.Internals.TypeBuilder
             return type;
         }
 
-        private static MethodBuilder BuildOnPropertyChanged(System.Reflection.Emit.TypeBuilder typeBuilder, EventBuilder eventBuilder, FieldInfo eventBackingField)
+       
+    
+        static MethodBuilder BuildOnPropertyChanged(System.Reflection.Emit.TypeBuilder typeBuilder, EventBuilder eventBuilder, FieldInfo eventBackingField)
         {
             var raisePropertyChanged = typeBuilder.DefineMethod("OnPropertyChanged", MethodAttributes.Private, typeof(void), new[] {typeof(string)});
             var generator = raisePropertyChanged.GetILGenerator();
@@ -185,7 +187,7 @@ namespace Falsy.NET.Internals.TypeBuilder
             return raisePropertyChanged;
         }
 
-        private static void OverrideParentPropertiesForPropertyChanged(System.Reflection.Emit.TypeBuilder typeBuilder, Type parent, MethodInfo raiseEvent)
+        static void OverrideParentPropertiesForPropertyChanged(System.Reflection.Emit.TypeBuilder typeBuilder, Type parent, MethodInfo raiseEvent)
         {
             foreach (var propertyInfo in Info.Extended.Properties(parent))
             {
@@ -244,22 +246,22 @@ namespace Falsy.NET.Internals.TypeBuilder
         }
 
 
-        private static readonly Lazy<MethodInfo> _delegateCombine = new Lazy<MethodInfo>(() =>
+        static readonly Lazy<MethodInfo> _delegateCombine = new Lazy<MethodInfo>(() =>
         {
             var delegateType = typeof(Delegate);
             return Info<Delegate>.GetSpecificMethod("Combine", new []{ delegateType, delegateType }).MethodInfo;
         });
         
         
-        private static readonly Lazy<MethodInfo> _delegateRemove = new Lazy<MethodInfo>(() =>
+        static readonly Lazy<MethodInfo> _delegateRemove = new Lazy<MethodInfo>(() =>
         {
             var delegateType = typeof(Delegate);
             return Info<Delegate>.GetSpecificMethod("Remove", new []{ delegateType, delegateType }).MethodInfo;
         });
         
-        private static readonly Lazy<ConstructorInfo> _createEventArgs = new Lazy<ConstructorInfo>(() => Info<PropertyChangingEventArgs>.GetConstructor(typeof(string)).ConstructorInfo);
+        static readonly Lazy<ConstructorInfo> _createEventArgs = new Lazy<ConstructorInfo>(() => Info<PropertyChangingEventArgs>.GetConstructor(typeof(string)).ConstructorInfo);
         
-        private static Tuple<EventBuilder, FieldBuilder> GenerateEvent(System.Reflection.Emit.TypeBuilder typeBuilder, IEventCaller @event)
+        static Tuple<EventBuilder, FieldBuilder> GenerateEvent(System.Reflection.Emit.TypeBuilder typeBuilder, IEventCaller @event)
         {
             var eventName = @event.Name;
             var eventHandlerType = @event.EventHandlerType;

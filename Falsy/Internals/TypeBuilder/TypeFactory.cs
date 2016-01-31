@@ -47,9 +47,9 @@ namespace Falsy.NET.Internals.TypeBuilder
             return result;
         }
 
-        static IReadOnlyList<MemberDefinition> CreateNodes(CallInfo callInfo, IReadOnlyList<object> args)
+        static IReadOnlyList<IMemberDefinition> CreateNodes(CallInfo callInfo, IReadOnlyList<object> args)
         {
-            var result = new List<MemberDefinition>();
+            var result = new List<IMemberDefinition>();
 
             int difference;
             var nameCount = callInfo.ArgumentNames.Count;
@@ -57,7 +57,7 @@ namespace Falsy.NET.Internals.TypeBuilder
 
             if (argumentCount != nameCount)
             {
-                if (nameCount != args.Count(x => !(x is MemberDefinition)))
+                if (nameCount != args.Count(x => !(x is IMemberDefinition)))
                     throw new NotSupportedException("Unnamed arguments must be MemberDefinition instances.");
 
                 difference = argumentCount - nameCount;
@@ -73,7 +73,7 @@ namespace Falsy.NET.Internals.TypeBuilder
             {
                 var argument = args[i];
 
-                var dynamicMember = argument as MemberDefinition;
+                var dynamicMember = argument as IMemberDefinition;
                 if (dynamicMember == null)
                 {
                     var name = argumentNames[i - difference];

@@ -5,9 +5,9 @@ using System.Reflection.Emit;
 
 namespace Falsy.NET.Internals.TypeBuilder
 {
-    class MethodMemberDefinition : MemberDefinition
+    class MethodMemberDefinition : MemberDefinition<MethodBuilder>
     {
-        const MethodAttributes _defaultMethodAttributes = MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot;
+        internal const MethodAttributes _defaultMethodAttributes = MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot;
         readonly MethodInfo _methodInfo;
 
         public MethodMemberDefinition(string name, Delegate @delegate, bool isVirtual)
@@ -21,7 +21,13 @@ namespace Falsy.NET.Internals.TypeBuilder
             _methodInfo = methodInfo;
         }
 
-        internal override void Build(System.Reflection.Emit.TypeBuilder typeBuilder)
+        public MethodMemberDefinition(MethodInfo methodInfo, bool isVirtual)
+            : base(methodInfo.Name, methodInfo.ReturnType, isVirtual)
+        {
+            _methodInfo = methodInfo;
+        }
+
+        internal override MethodBuilder Build(System.Reflection.Emit.TypeBuilder typeBuilder)
         {
             var name = Name;
             
@@ -41,6 +47,8 @@ namespace Falsy.NET.Internals.TypeBuilder
 
             generator.Emit(OpCodes.Call, _methodInfo);
             generator.Emit(OpCodes.Ret);
+
+            return methodBuilder;
         }
     }
 }
