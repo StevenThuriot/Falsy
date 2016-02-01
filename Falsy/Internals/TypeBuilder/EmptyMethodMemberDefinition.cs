@@ -39,10 +39,15 @@ namespace Falsy.NET.Internals.TypeBuilder
             var parameterTypes = ParameterTypes;
 
             MethodBuilder methodBuilder = typeBuilder.DefineMethod(name, _defaultMethodAttributes, returnType, parameterTypes);
+            
+            Build(returnType, methodBuilder.GetILGenerator());
+            
+            return methodBuilder;
+        }
 
-            var generator = methodBuilder.GetILGenerator();
-
-            if (returnType != typeof (void))
+        internal static void Build(Type returnType, ILGenerator generator)
+        {
+            if (returnType != typeof(void))
             {
                 if (!returnType.IsValueType)
                 {
@@ -67,8 +72,6 @@ namespace Falsy.NET.Internals.TypeBuilder
             }
 
             generator.Emit(OpCodes.Ret);
-
-            return methodBuilder;
         }
     }
 }

@@ -34,7 +34,7 @@ namespace Falsy.NET.Internals.TypeBuilder
             var parameterTypes = new[] {memberType};
 
             // Define the property setter method for our private field.
-            var setBuilder = typeBuilder.DefineMethod("set_" + memberName, methodAttributes, null, parameterTypes);
+            var setBuilder = typeBuilder.DefineMethod("set_" + memberName, methodAttributes, typeof(void), parameterTypes);
 
             var setIL = setBuilder.GetILGenerator();
 
@@ -70,8 +70,7 @@ namespace Falsy.NET.Internals.TypeBuilder
             setIL.Emit(OpCodes.Ret);
 
             // Generate a public property
-            var property = typeBuilder.DefineProperty(memberName, PropertyAttributes.None, memberType,
-                                                      parameterTypes);
+            var property = typeBuilder.DefineProperty(memberName, PropertyAttributes.None, memberType, parameterTypes);
 
             // Map our two methods created above to their corresponding behaviors, "get" and "set" respectively. 
             property.SetGetMethod(getBuilder);
