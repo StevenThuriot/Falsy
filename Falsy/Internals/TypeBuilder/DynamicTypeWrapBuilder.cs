@@ -31,6 +31,7 @@ namespace Falsy.NET.Internals.TypeBuilder
         //TODO: Refactor to membernodes
         //TODO: Allow multiple interfaces
         //TODO: Check for internal methods / calls on the actual type. The generated IL code will not be able to call them.
+        //TODO: Support parent class
         public static Type CreateWrapper(Type interfaceWrapperType, Type actualType, bool throwNotImplemented)
         {
             var builder = DynamicTypeBuilder._falsyModule.DefineType(interfaceWrapperType.Name + "Wrapper", WrapperClassAttributes);
