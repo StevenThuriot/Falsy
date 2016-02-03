@@ -65,10 +65,12 @@
     <Compile Include="Falsy.cs" />
     <Compile Include="Internals\EnumerableFalsy.cs" />
     <Compile Include="Internals\FalsyTypeConverter.cs" />
+    <Compile Include="Internals\TypeBuilder\DynamicTypeWrapBuilder.cs" />
     <Compile Include="Internals\TypeBuilder\EmptyMethodMemberDefinition.cs" />
     <Compile Include="Internals\TypeBuilder\EventMemberDefinition.cs" />
     <Compile Include="Internals\TypeBuilder\FieldMember.cs" />
     <Compile Include="Internals\TypeBuilder\FieldMemberDefinition.cs" />
+    <Compile Include="Internals\TypeBuilder\IMemberDefinition.cs" />
     <Compile Include="Internals\TypeBuilder\MemberDefinition.cs" />
     <Compile Include="Internals\TypeBuilder\Member.cs" />
     <Compile Include="Internals\TypeBuilder\DynamicTypeBuilder.cs" />
