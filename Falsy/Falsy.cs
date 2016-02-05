@@ -1,8 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using Falsy.NET.Internals;
-using Falsy.NET.Internals.TypeBuilder;
 using Horizon;
+using Horizon.Forge;
 
 namespace Falsy.NET
 {

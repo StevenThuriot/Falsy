@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Falsy", "Falsy\Falsy.csproj", "{564B6209-4397-4C50-9DBF-A2908FE969E9}"
 EndProject
@@ -9,9 +9,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Falsy.Tests", "Falsy.Tests\
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Horizon", "Horizon\Horizon.shproj", "{659F049F-2F56-4BA3-9009-739704AADB18}"
 EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Horizon.Forge", "Horizon.Forge\Horizon.Forge.shproj", "{1DE6C384-6D63-4880-837D-6773B41F89C0}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Horizon.Forge\Horizon.Forge.projitems*{564b6209-4397-4c50-9dbf-a2908fe969e9}*SharedItemsImports = 4
 		Horizon\Horizon.projitems*{564b6209-4397-4c50-9dbf-a2908fe969e9}*SharedItemsImports = 4
+		Horizon.Forge\Horizon.Forge.projitems*{1de6c384-6d63-4880-837d-6773b41f89c0}*SharedItemsImports = 13
 		Horizon\Horizon.projitems*{659f049f-2f56-4ba3-9009-739704aadb18}*SharedItemsImports = 13
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

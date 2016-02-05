@@ -65,23 +65,9 @@
     <Compile Include="Falsy.cs" />
     <Compile Include="Internals\EnumerableFalsy.cs" />
     <Compile Include="Internals\FalsyTypeConverter.cs" />
-    <Compile Include="Internals\TypeBuilder\DynamicTypeWrapBuilder.cs" />
-    <Compile Include="Internals\TypeBuilder\EmptyMethodMemberDefinition.cs" />
-    <Compile Include="Internals\TypeBuilder\EventMemberDefinition.cs" />
-    <Compile Include="Internals\TypeBuilder\FieldMember.cs" />
-    <Compile Include="Internals\TypeBuilder\FieldMemberDefinition.cs" />
-    <Compile Include="Internals\TypeBuilder\IMemberDefinition.cs" />
-    <Compile Include="Internals\TypeBuilder\MemberDefinition.cs" />
-    <Compile Include="Internals\TypeBuilder\Member.cs" />
-    <Compile Include="Internals\TypeBuilder\DynamicTypeBuilder.cs" />
-    <Compile Include="Internals\TypeBuilder\MethodMemberDefinition.cs" />
-    <Compile Include="Internals\TypeBuilder\PropertyMember.cs" />
-    <Compile Include="Internals\TypeBuilder\PropertyMemberDefinition.cs" />
-    <Compile Include="Internals\TypeBuilder\UnknownMember.cs" />
     <Compile Include="Internals\TypedDictionaryBuilder.cs" />
     <Compile Include="Internals\TypedDictionaryFalsy.cs" />
     <Compile Include="Internals\NumericInfo.cs" />
-    <Compile Include="Internals\TypeBuilder\TypeFactory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Internals\UndefinedFalsy.cs" />
   </ItemGroup>
@@ -89,6 +75,7 @@
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <Import Project="..\Horizon\Horizon.projitems" Label="Shared" />
+  <Import Project="..\Horizon.Forge\Horizon.Forge.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -4,8 +4,8 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using Falsy.NET;
-using Falsy.NET.Internals.TypeBuilder;
 using Horizon;
+using Horizon.Forge;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 

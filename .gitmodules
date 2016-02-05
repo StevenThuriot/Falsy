@@ -2,3 +2,6 @@
 	path = Horizon
 	url = https://github.com/StevenThuriot/Horizon.git
 	branch = master
+[submodule "Horizon.Forge"]
+	path = Horizon.Forge
+	url = https://github.com/StevenThuriot/Horizon.Forge.git
