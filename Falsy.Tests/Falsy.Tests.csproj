@@ -63,6 +63,7 @@
     <Compile Include="TestClass.cs" />
     <Compile Include="Timings.cs" />
     <Compile Include="Toggle.cs" />
+    <Compile Include="Wrappee.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Falsy\Falsy.csproj">

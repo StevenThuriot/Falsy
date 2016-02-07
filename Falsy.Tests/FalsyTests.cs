@@ -1325,6 +1325,16 @@ namespace Falsy.Tests
             Assert.AreEqual(0, result);
         }
 
+        //Note to self, when declaring this method as a variable inside our previous method, a System.MethodAccessException is thrown.
+        //Remember that our new method lives inside a dynamic assembly and needs access to this method to be able to call it.
+        public static int Multiply(int x, int y)
+        {
+            Assert.AreEqual(5, x);
+            Assert.AreEqual(3, y);
+
+            return x * y;
+        }
+
         [TestMethod]
         public void FalsyCanImplementDelegatesAsMethods()
         {
@@ -1384,14 +1394,30 @@ namespace Falsy.Tests
             Assert.AreEqual(number, 5);
         }
 
-        //Note to self, when declaring this method as a variable inside our previous method, a System.MethodAccessException is thrown.
-        //Remember that our new method lives inside a dynamic assembly and needs access to this method to be able to call it.
-        public static int Multiply(int x, int y)
+        [TestMethod]
+        public void FalsyCanCreateAWrapperType()
         {
-            Assert.AreEqual(5, x);
-            Assert.AreEqual(3, y);
+            NET.Falsy.DefineWrapperFor(typeof(Wrappee))
+                     .With(typeof(IWrapper))
+                     .WrappedInstance();
 
-            return x * y;
+            var wrappee = new Wrappee();
+            var wrappedInstace = NET.Falsy.NewWrapper.WrappedInstance(wrappee);
+
+            bool isType = wrappedInstace is IWrapper;
+            Assert.IsTrue(isType);
+
+            IWrapper wrappedInterface = (IWrapper)wrappedInstace;
+
+            Assert.AreEqual(5, wrappedInterface.GetNumber());
+
+            Assert.IsNull(wrappedInterface.Name);
+
+            wrappedInterface.Name = "Steven";
+            Assert.AreEqual("Steven", wrappedInterface.Name);
+            Assert.AreEqual("Steven", wrappee.Name);
         }
+
+
     }
 }
