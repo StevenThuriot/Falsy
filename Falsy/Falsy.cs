@@ -65,10 +65,10 @@ namespace Falsy.NET
 
 
         public static dynamic Define => new TypeFactory.DefineTypeFactory();
-        public static dynamic DefineWrapperFor => new TypeFactory.WrapFactory();
+        public static dynamic WrapType => new TypeFactory.WrapFactory();
 
         public static dynamic New { get; } = new TypeFactory.NewTypeFactory();
-        public static dynamic NewWrapper { get; } = new TypeFactory.NewWrapFactory();
+        public static dynamic Wrap { get; } = new TypeFactory.NewWrapFactory();
 
 
         static class Helper<T>

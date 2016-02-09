@@ -1397,12 +1397,12 @@ namespace Falsy.Tests
         [TestMethod]
         public void FalsyCanCreateAWrapperType()
         {
-            NET.Falsy.DefineWrapperFor(typeof(Wrappee))
+            NET.Falsy.WrapType(typeof(Wrappee))
                      .With(typeof(IWrapper))
                      .WrappedInstance();
 
             var wrappee = new Wrappee();
-            var wrappedInstace = NET.Falsy.NewWrapper.WrappedInstance(wrappee);
+            var wrappedInstace = NET.Falsy.Wrap.WrappedInstance(wrappee);
 
             bool isType = wrappedInstace is IWrapper;
             Assert.IsTrue(isType);
