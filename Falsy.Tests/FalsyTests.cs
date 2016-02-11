@@ -1402,12 +1402,12 @@ namespace Falsy.Tests
                      .WrappedInstance();
 
             var wrappee = new Wrappee();
-            var wrappedInstace = NET.Falsy.Wrap.WrappedInstance(wrappee);
+            var wrappedInstance = NET.Falsy.Wrap.WrappedInstance(wrappee);
 
-            bool isType = wrappedInstace is IWrapper;
+            bool isType = wrappedInstance is IWrapper;
             Assert.IsTrue(isType);
 
-            IWrapper wrappedInterface = (IWrapper)wrappedInstace;
+            IWrapper wrappedInterface = (IWrapper)wrappedInstance;
 
             Assert.AreEqual(5, wrappedInterface.GetNumber());
 
@@ -1416,6 +1416,26 @@ namespace Falsy.Tests
             wrappedInterface.Name = "Steven";
             Assert.AreEqual("Steven", wrappedInterface.Name);
             Assert.AreEqual("Steven", wrappee.Name);
+        }
+
+        [TestMethod, ExpectedException(typeof(NotSupportedException))]
+        public void FalsyCanCreateAWrapperTypeAndThrowNotSupportedExceptionsOnMissingParts()
+        {
+            NET.Falsy.WrapType(typeof(Wrappee))
+                     .With(typeof(IPerson))
+                     .ThrowNotSupported()
+                     .WrappedPerson();
+
+            var wrappee = new Wrappee();
+            var wrappedInstance = NET.Falsy.Wrap.WrappedPerson(wrappee);
+
+            bool isType = wrappedInstance is IPerson;
+            Assert.IsTrue(isType);
+
+            var wrappedInterface = (IPerson)wrappedInstance;
+
+            var age = wrappedInterface.Age;
+            Assert.Fail("Should have thrown an exception");
         }
 
 
