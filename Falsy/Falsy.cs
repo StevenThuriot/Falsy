@@ -74,7 +74,10 @@ namespace Falsy.NET
         }
 
         private static dynamic RealTypedFalsify<T>(this T instance)
-        {            
+        {
+            if (instance is DynamicFalsy)
+                return instance;
+
             if (instance is IDictionary)
                 return InternalDictionaryFalsify((dynamic)instance); //TODO : Fix for internal types
 
