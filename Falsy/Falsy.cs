@@ -4,14 +4,14 @@ using Falsy.NET.Internals;
 using Horizon;
 using Horizon.Forge;
 using System.Reflection;
+using System.Linq.Expressions;
+using System;
 
 namespace Falsy.NET
 {
     public static class Falsy
     {
         public static readonly dynamic undefined = UndefinedFalsy.Value;
-        private static MethodInfo _caller = typeof(Falsy).GetMethod("RealTypedFalsify", BindingFlags.Static | BindingFlags.NonPublic);
-
 
         public static dynamic Falsify<T>(this T instance)
         {
@@ -31,56 +31,58 @@ namespace Falsy.NET
                 if (actualType.IsNotPublic)
                 {
                     //DLR does not like non-public types
-                    return _caller.MakeGenericMethod(actualType).Invoke(null, new object[] { instance }); //TODO : Cached Expression Tree
+                    return CallRealTypedFalsify(instance, actualType);
                 }
             }
             else if (typeof(T).IsNotPublic)
             {
                 //DLR does not like non-public types
-                return _caller.MakeGenericMethod(instance.GetType()).Invoke(null, new object[] { instance }); //TODO : Cached Expression Tree
+                return CallRealTypedFalsify(instance, instance.GetType());
             }
 
-            //Resolve actual type through the DLR
+            //Resolve actual type through the DLR, since it's public this will work and it will be fast.
             return RealTypedFalsify((dynamic)instance);
         }
 
-        private static dynamic RealTypedFalsify<T>(this T instance)
+        private static dynamic CallRealTypedFalsify<T>(T instance, Type actualType)
         {
-            if (instance is DynamicFalsy)
+            if (actualType.IsAssignableFrom(typeof(DynamicFalsy)))
                 return instance;
-            
+
+            var parameter = Expression.Parameter(actualType, "instance");
+
+            string method;
+            if (typeof(IDictionary).IsAssignableFrom(actualType))
+            {
+                method = "InternalDictionaryFalsify";
+            }
+            else if (typeof (IEnumerable).IsAssignableFrom(actualType))
+            {
+                method = "InternalEnumerableFalsify";
+            }
+            else
+            {
+                method = "InternalFalsify";
+            }
+
+            var call = Expression.Call(typeof(Falsy), method, new[] { actualType }, parameter);
+
+            var lambda = Expression.Lambda<Func<T, object>>(call, parameter);
+            var @delegate = lambda.Compile();
+
+            return @delegate(instance); //TODO : Cache
+        }
+
+        private static dynamic RealTypedFalsify<T>(this T instance)
+        {            
             if (instance is IDictionary)
                 return InternalDictionaryFalsify((dynamic)instance); //TODO : Fix for internal types
 
             if (instance is IEnumerable)
                 return InternalEnumerableFalsify((dynamic)instance); //TODO : Fix for internal types
-
-            //Resolve actual type through the DLR
+            
             return InternalFalsify(instance);
         }
-
-        //public static dynamic Falsify(this IEnumerable instance)
-        //{
-        //    return Reference.IsNull(instance)
-        //        ? undefined
-        //        //Resolve actual type through the DLR
-        //        : InternalEnumerableFalsify((dynamic) instance);
-        //}
-
-        //public static dynamic Falsify(this IDictionary instance)
-        //{
-        //    return Reference.IsNull(instance)
-        //        ? undefined
-        //        //Resolve actual type through the DLR
-        //        : InternalDictionaryFalsify((dynamic)instance);
-        //}
-
-        //public static dynamic Falsify(this DynamicFalsy instance)
-        //{
-        //    return Reference.IsNull(instance)
-        //        ? undefined
-        //        : instance;
-        //}
 
 
         static dynamic InternalFalsify<T>(T instance)
