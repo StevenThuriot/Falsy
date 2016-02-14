@@ -31,49 +31,61 @@ namespace Falsy.NET
                 if (actualType.IsNotPublic)
                 {
                     //DLR does not like non-public types
-                    return CallRealTypedFalsify(instance, actualType);
+                    return ResolverRealTypeCaller(actualType)(instance);
                 }
             }
-            else if (typeof(T).IsNotPublic)
+            else if (typeof(T).IsNotPublic || typeof(T).IsInterface)
             {
                 //DLR does not like non-public types
-                return CallRealTypedFalsify(instance, instance.GetType());
+                return ResolverRealTypeCaller(instance.GetType())(instance);
             }
 
             //Resolve actual type through the DLR, since it's public this will work and it will be fast.
             return RealTypedFalsify((dynamic)instance);
         }
 
-        private static dynamic CallRealTypedFalsify<T>(T instance, Type actualType)
+
+        static readonly Dictionary<Type, Func<object, object>> _realTypeCallerCache = new Dictionary<Type, Func<object, object>>();
+        static Func<object, object> ResolverRealTypeCaller(Type actualType)
         {
-            if (actualType.IsAssignableFrom(typeof(DynamicFalsy)))
-                return instance;
+            Func<object, object> @delegate;
 
-            var parameter = Expression.Parameter(actualType, "instance");
-
-            string method;
-            if (typeof(IDictionary).IsAssignableFrom(actualType))
+            if (!_realTypeCallerCache.TryGetValue(actualType, out @delegate))
             {
-                method = "InternalDictionaryFalsify";
-            }
-            else if (typeof (IEnumerable).IsAssignableFrom(actualType))
-            {
-                method = "InternalEnumerableFalsify";
-            }
-            else
-            {
-                method = "InternalFalsify";
+                if (actualType.IsAssignableFrom(typeof(DynamicFalsy)))
+                {
+                    @delegate = new Func<object, object>(x => x);
+                }
+                else
+                {
+                    string method;
+                    if (typeof(IDictionary).IsAssignableFrom(actualType))
+                    {
+                        method = "InternalDictionaryFalsify";
+                    }
+                    else if (typeof(IEnumerable).IsAssignableFrom(actualType))
+                    {
+                        method = "InternalEnumerableFalsify";
+                    }
+                    else
+                    {
+                        method = "InternalFalsify";
+                    }
+
+                    var parameter = Expression.Parameter(typeof(object), "instance");
+                    var call = Expression.Call(typeof(Falsy), method, new[] { actualType }, Expression.Convert(parameter, actualType));
+                    var lambda = Expression.Lambda<Func<object, object>>(call, parameter);
+
+                    @delegate = lambda.Compile();
+                }
+
+                _realTypeCallerCache[actualType] = @delegate;
             }
 
-            var call = Expression.Call(typeof(Falsy), method, new[] { actualType }, parameter);
-
-            var lambda = Expression.Lambda<Func<T, object>>(call, parameter);
-            var @delegate = lambda.Compile();
-
-            return @delegate(instance); //TODO : Cache
+            return @delegate;
         }
 
-        private static dynamic RealTypedFalsify<T>(this T instance)
+        static dynamic RealTypedFalsify<T>(this T instance)
         {
             if (instance is DynamicFalsy)
                 return instance;
