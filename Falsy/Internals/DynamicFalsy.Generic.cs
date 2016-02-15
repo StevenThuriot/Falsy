@@ -11,7 +11,7 @@ namespace Falsy.NET.Internals
     [TypeConverter(typeof(FalsyTypeConverter))]
 	public class DynamicFalsy<T> : DynamicFalsy
     {
-        private static readonly Func<T, bool> Falsy;
+        static readonly Func<T, bool> Falsy;
         
         protected readonly T _instance;
         protected readonly Lazy<bool> _isFalse;
@@ -19,10 +19,7 @@ namespace Falsy.NET.Internals
         protected readonly Lazy<bool> _isFalsyNaN;
         protected readonly Lazy<bool> _isFalsyNull;
 
-	    public static Type UnderlyingType 
-	    {
-		    get { return typeof(T); }
-	    }
+        public static Type UnderlyingType => typeof(T);
 
         static DynamicFalsy() //Once per T.
         {
@@ -81,16 +78,7 @@ namespace Falsy.NET.Internals
         {
             object member;
 
-            if (Info<T>.TryGetProperty(_instance, binder.Name, out member))
-            {
-                if (Reference.IsNotNull(member))
-                {
-                    dynamic value = member;
-                    result = NET.Falsy.Falsify(value);
-                    return true;
-                }
-            }
-            else if (Info<T>.TryGetField(_instance, binder.Name, out member))
+            if (Info<T>.TryGetValue(_instance, binder.Name, out member))
             {
                 if (Reference.IsNotNull(member))
                 {
@@ -103,7 +91,7 @@ namespace Falsy.NET.Internals
             result = UndefinedFalsy.Value;
             return true;
         }
-
+        
         public override bool TrySetMember(SetMemberBinder binder, object value)
         {
             return Info<T>.TrySetProperty(_instance, binder.Name, value) ||
@@ -152,19 +140,14 @@ namespace Falsy.NET.Internals
             switch (binder.Operation)
             {
                 case ExpressionType.Not:
-                    result = _isFalse.Value;
-                    return true;
-
-
-                case ExpressionType.IsTrue:
-                    result = !_isFalse.Value;
-                    return true;
-
                 case ExpressionType.IsFalse:
                     result = _isFalse.Value;
                     return true;
 
-
+                case ExpressionType.IsTrue:
+                    result = !_isFalse.Value;
+                    return true;
+                    
                 case ExpressionType.Equal:
                     result = Equals(arg);
                     return true;
@@ -172,7 +155,6 @@ namespace Falsy.NET.Internals
                 case ExpressionType.NotEqual:
                     result = !Equals(arg);
                     return true;
-
 
                 case ExpressionType.And:
                 case ExpressionType.AndAlso:
@@ -217,55 +199,42 @@ namespace Falsy.NET.Internals
 
         public override bool TryUnaryOperation(UnaryOperationBinder binder, out object result)
         {
-            if (binder.Operation == ExpressionType.Not)
+            switch (binder.Operation)
             {
-                result = _isFalse.Value;
-                return true;
-            }
-
-            if (binder.ReturnType == typeof(bool))
-            {
-                if (binder.Operation == ExpressionType.IsTrue)
-                {
-                    result = !_isFalse.Value;
-                    return true;
-                }
-
-                if (binder.Operation == ExpressionType.IsFalse)
-                {
+                case ExpressionType.Not:
                     result = _isFalse.Value;
                     return true;
-                }
-            }
 
+                case ExpressionType.IsTrue:
+                    if (binder.ReturnType == typeof(bool))
+                    {
+                        result = !_isFalse.Value;
+                        return true;
+                    }
+                    break;
+
+                case ExpressionType.IsFalse:
+                    if (binder.ReturnType == typeof(bool))
+                    {
+                        result = _isFalse.Value;
+                        return true;
+                    }
+                    break;
+            }
+            
             return base.TryUnaryOperation(binder, out result);
         }
 
 
-        protected internal override bool GetBooleanValue()
-        {
-            return !_isFalse.Value;
-        }
+        protected internal override bool GetBooleanValue() => !_isFalse.Value;
 
-		protected internal override dynamic GetValue()
-		{
-			return _instance;
-		}
+        protected internal override dynamic GetValue() => _instance;
 
-		public override bool IsFalsyEquivalent()
-        {
-            return _isFalsyEquivalent.Value;
-        }
+        public override bool IsFalsyEquivalent() => _isFalsyEquivalent.Value;
 
-        public override bool IsFalsyNull()
-        {
-            return _isFalsyNull.Value;
-        }
+        public override bool IsFalsyNull() => _isFalsyNull.Value;
 
-        public override bool IsFalsyNaN()
-        {
-            return _isFalsyNaN.Value;
-        }
+        public override bool IsFalsyNaN() => _isFalsyNaN.Value;
 
 
         public override bool Equals(DynamicFalsy arg)

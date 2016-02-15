@@ -22,10 +22,7 @@ namespace Falsy.NET.Internals
                                                                  //typeof (Complex),
                                                              };
 
-        public static bool IsNumeric<T>(T instance)
-        {
-            return Typed<T>.TypeIsNumeric;
-        }
+        public static bool IsNumeric<T>(T instance) => Typed<T>.TypeIsNumeric;
 
         public static bool IsNumeric(this Type type)
         {

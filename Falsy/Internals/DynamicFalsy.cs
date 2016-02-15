@@ -13,42 +13,37 @@ namespace Falsy.NET.Internals
             return other ? !isFalsyEquivalent : isFalsyEquivalent;
         }
 
-        public override sealed bool Equals(object arg)
+        public override sealed bool Equals(object obj)
         {
-            if (Reference.IsNull(arg))
+            if (Reference.IsNull(obj))
                 return IsFalsyNull();
 
-            if (arg is bool)
-                return Equals((bool) arg);
+            if (obj is bool)
+                return Equals((bool) obj);
 
-            var falsy = arg as DynamicFalsy;
+            var falsy = obj as DynamicFalsy;
             if (Reference.IsNotNull(falsy))
                 return Equals(falsy);
 
             if (IsFalsyNull())
                 //The falsy values null and undefined are not equivalent to anything except themselves
-                return FalsyNull(arg);
+                return FalsyNull(obj);
 
             if (IsFalsyEquivalent())
                 //The falsy values false, 0 (zero), and "" (empty string) are all equivalent and can be compared against each other
-                return FalsyEquivalent(arg);
+                return FalsyEquivalent(obj);
 
             if (IsFalsyNaN())
                 //Finally, the falsy value NaN is not equivalent to anything — including NaN!
                 return false;
 
-            if (FalsyNull(arg) || FalsyNaN(arg))
+            if (FalsyNull(obj) || FalsyNaN(obj))
                 return false;
 
-            return InternalEquals(arg);
+            return InternalEquals(obj);
         }
-
-
-        public override sealed int GetHashCode()
-        {
-            return 1; //Make sure falsies clash.
-        }
-
+        
+        public override sealed int GetHashCode() => 1; //Make sure falsies clash.
 
         public static bool FalsyEquivalent(object arg)
         {
@@ -67,15 +62,9 @@ namespace Falsy.NET.Internals
             return result;
         }
 
-        public static bool FalsyNull(object arg)
-        {
-            return Reference.IsNull(arg) || ReferenceEquals((object)UndefinedFalsy.Value, arg);
-        }
+        public static bool FalsyNull(object arg) => Reference.IsNull(arg) || ReferenceEquals((object)UndefinedFalsy.Value, arg);
 
-        public static bool FalsyNaN(object arg)
-        {
-            return Equals(float.NaN, arg) || Equals(double.NaN, arg);
-        }
+        public static bool FalsyNaN(object arg) => Equals(float.NaN, arg) || Equals(double.NaN, arg);
 
         public static bool operator ==(DynamicFalsy falsy1, DynamicFalsy falsy2)
         {
@@ -90,54 +79,23 @@ namespace Falsy.NET.Internals
             return Equals(falsy1, falsy2);
         }
 
-        public static bool operator !=(DynamicFalsy falsy1, DynamicFalsy falsy2)
-        {
-            return !(falsy1 == falsy2);
-        }
+        public static bool operator !=(DynamicFalsy falsy1, DynamicFalsy falsy2) => !(falsy1 == falsy2);
 
-        public static bool operator ==(object value, DynamicFalsy falsy)
-        {
-            return Equals(falsy, value);
-        }
+        public static bool operator ==(object value, DynamicFalsy falsy) => Equals(falsy, value);
 
-        public static bool operator !=(object value, DynamicFalsy falsy)
-        {
-            return !Equals(falsy, value);
-        }
+        public static bool operator !=(object value, DynamicFalsy falsy) => !Equals(falsy, value);
 
-        public static bool operator ==(DynamicFalsy falsy, object value)
-        {
-            return Equals(falsy, value);
-        }
+        public static bool operator ==(DynamicFalsy falsy, object value) => Equals(falsy, value);
 
-        public static bool operator !=(DynamicFalsy falsy, object value)
-        {
-            return !Equals(falsy, value);
-        }
+        public static bool operator !=(DynamicFalsy falsy, object value) => !Equals(falsy, value);
 
-        public static bool operator ==(bool value, DynamicFalsy falsy)
-        {
-// ReSharper disable once PossibleNullReferenceException
-            return Reference.IsNull(falsy) ? value : falsy.Equals(value);
-        }
+        public static bool operator ==(bool value, DynamicFalsy falsy) => Reference.IsNull(falsy) ? value : falsy.Equals(value);
 
-        public static bool operator !=(bool value, DynamicFalsy falsy)
-        {
-// ReSharper disable once PossibleNullReferenceException
-            return !(Reference.IsNull(falsy) ? value : falsy.Equals(value));
-        }
+        public static bool operator !=(bool value, DynamicFalsy falsy) => !(Reference.IsNull(falsy) ? value : falsy.Equals(value));
 
-        public static bool operator ==(DynamicFalsy falsy, bool value)
-        {
-// ReSharper disable once PossibleNullReferenceException
-            return Reference.IsNull(falsy) ? value : falsy.Equals(value);
-        }
+        public static bool operator ==(DynamicFalsy falsy, bool value) => Reference.IsNull(falsy) ? value : falsy.Equals(value);
 
-        public static bool operator !=(DynamicFalsy falsy, bool value)
-        {
-// ReSharper disable once PossibleNullReferenceException
-            return !(Reference.IsNull(falsy) ? value : falsy.Equals(value));
-        }
+        public static bool operator !=(DynamicFalsy falsy, bool value) => !(Reference.IsNull(falsy) ? value : falsy.Equals(value));
 
 
         public abstract bool IsFalsyEquivalent();

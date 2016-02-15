@@ -79,19 +79,16 @@ namespace Falsy.NET.Internals
             switch (binder.Operation)
             {
                 case ExpressionType.Not:
-                    result = true;
-                    return true;
-
-
-                case ExpressionType.IsTrue:
-                    result = false;
-                    return true;
-
                 case ExpressionType.IsFalse:
                     result = true;
                     return true;
-
-
+                    
+                case ExpressionType.IsTrue:
+                case ExpressionType.And:
+                case ExpressionType.AndAlso:
+                    result = false;
+                    return true;
+                    
                 case ExpressionType.Equal:
                     result = Equals(arg);
                     return true;
@@ -99,14 +96,7 @@ namespace Falsy.NET.Internals
                 case ExpressionType.NotEqual:
                     result = !Equals(arg);
                     return true;
-
-
-                case ExpressionType.And:
-                case ExpressionType.AndAlso:
-                    result = false;
-                    return true;
-
-
+                    
                 case ExpressionType.Or:
                 case ExpressionType.OrElse:
                     if (binder.ReturnType == typeof(bool))
@@ -133,25 +123,28 @@ namespace Falsy.NET.Internals
 
         public override bool TryUnaryOperation(UnaryOperationBinder binder, out object result)
         {
-            if (binder.Operation == ExpressionType.Not)
+            switch (binder.Operation)
             {
-                result = true;
-                return true;
-            }
-
-            if (binder.ReturnType == typeof(bool))
-            {
-                if (binder.Operation == ExpressionType.IsTrue)
-                {
-                    result = false;
-                    return true;
-                }
-
-                if (binder.Operation == ExpressionType.IsFalse)
-                {
+                case ExpressionType.Not:
                     result = true;
                     return true;
-                }
+
+
+                case ExpressionType.IsTrue:
+                    if (binder.ReturnType == typeof(bool))
+                    {
+                        result = false;
+                        return true;
+                    }
+                    break;
+
+                case ExpressionType.IsFalse:
+                    if (binder.ReturnType == typeof(bool))
+                    {
+                        result = true;
+                        return true;
+                    }
+                    break;
             }
 
             return base.TryUnaryOperation(binder, out result);
