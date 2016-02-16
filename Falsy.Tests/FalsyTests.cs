@@ -1457,5 +1457,26 @@ namespace Falsy.Tests
             Assert.AreEqual(28, age);
         }
 
+        [TestMethod]
+        public void FalsyWorksOnAnonymousTypesWithMethods()
+        {
+            var counter = 0;
+            var anon = new
+            {
+                Name = "Steven",
+                Age = 28,
+                Speak = new Func<string, string>(x => "Hello " + x),
+                Count = new Action(() => counter++),
+            };
+
+            var falsy = anon.Falsify();
+
+            string spoken = falsy.Speak("Bob");
+            Assert.AreEqual("Hello Bob", spoken);
+
+            falsy.Count();
+            Assert.AreEqual(1, counter);
+        }
+
     }
 }

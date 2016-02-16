@@ -114,6 +114,24 @@ namespace Falsy.NET.Internals
                 return true;
             }
 
+            if (Info<T>.TryGetValue(_instance, binder.Name, out output))
+            {
+                var @delegate = output as Delegate;
+                if (Reference.IsNotNull(@delegate))
+                {
+                    dynamic value = @delegate.FastInvoke(args);
+
+                    if (Reference.IsNull((object)value))
+                    {
+                        result = UndefinedFalsy.Value;
+                        return true;
+                    }
+
+                    result = NET.Falsy.Falsify(value);
+                    return true;
+                }
+            }
+
             result = UndefinedFalsy.Value;
             return false;
         }
