@@ -1467,6 +1467,7 @@ namespace Falsy.Tests
                 Age = 28,
                 Speak = new Func<string, string>(x => "Hello " + x),
                 Count = new Action(() => counter++),
+                Add = new Action<int>(x => counter += x),
             };
 
             var falsy = anon.Falsify();
@@ -1476,6 +1477,24 @@ namespace Falsy.Tests
 
             falsy.Count();
             Assert.AreEqual(1, counter);
+
+            falsy.Add(5);
+            Assert.AreEqual(6, counter);
+        }
+
+        [TestMethod]
+        public void FalsyVoidMethodsReturnUndefined()
+        {
+            var counter = 0;
+            var anon = new
+            {
+                Action = new Action(() => counter++),
+            };
+
+            var falsy = anon.Falsify();
+            var result = falsy.Action();
+            Assert.AreEqual(1, counter);
+            Assert.AreEqual(NET.Falsy.undefined, result);
         }
 
     }
