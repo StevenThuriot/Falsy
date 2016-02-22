@@ -13,7 +13,7 @@ namespace Falsy.NET
     {
         public static readonly dynamic undefined = UndefinedFalsy.Value;
 
-        public static dynamic Falsify<T>(this T instance)
+        public static dynamic Falsify<T>(this T instance, bool forceTypeCheck = false)
         {
             if (Reference.IsNull(instance))
                 return undefined;
@@ -28,13 +28,13 @@ namespace Falsy.NET
                     return InternalFalsify(instance);
                 }
 
-                if (actualType.IsNotPublic)
+                if (forceTypeCheck || actualType.IsNotPublic)
                 {
                     //DLR does not like non-public types
                     return ResolverRealTypeCaller(actualType)(instance);
                 }
             }
-            else if (typeof(T).IsNotPublic || typeof(T).IsInterface)
+            else if (forceTypeCheck || typeof(T).IsNotPublic || typeof(T).IsInterface)
             {
                 //DLR does not like non-public types
                 return ResolverRealTypeCaller(instance.GetType())(instance);
