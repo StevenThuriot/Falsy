@@ -1418,6 +1418,51 @@ namespace Falsy.Tests
             Assert.AreEqual("Steven", wrappee.Name);
         }
 
+        [TestMethod]
+        public void FalsyCanCreateAnAnonymousWrapperType()
+        {
+            var anon = new
+            {
+                Name = "Steven"
+            };
+
+            NET.Falsy.WrapType(anon.GetType())
+                     .With(typeof(IWrapper))
+                     .WrappedAnonInstance();
+
+            var wrappedInstance = NET.Falsy.Wrap.WrappedAnonInstance(anon);
+
+            Assert.IsTrue(wrappedInstance is IWrapper);
+            IWrapper wrappedInterface = (IWrapper)wrappedInstance;
+            Assert.AreEqual("Steven", wrappedInterface.Name);
+        }
+
+        [TestMethod]
+        public void FalsyCanCreateAWrapperTypeForInternalTypes()
+        {
+            NET.Falsy.WrapType(typeof(InternalClass))
+                     .With(typeof(IWrapper))
+                     .WrappedInternalInstance();
+
+            var wrappee = new InternalClass();
+            var wrappedInstance = NET.Falsy.Wrap.WrappedInternalInstance(wrappee);
+
+            bool isType = wrappedInstance is IWrapper;
+            Assert.IsTrue(isType);
+
+            IWrapper wrappedInterface = (IWrapper)wrappedInstance;
+
+            //TODO:
+            //Assert.AreEqual(5, wrappedInterface.GetNumber());
+
+            Assert.IsNull(wrappedInterface.Name);
+
+            wrappedInterface.Name = "Steven";
+
+            Assert.AreEqual("Steven", wrappedInterface.Name);
+            Assert.AreEqual("Steven", wrappee.Name);
+        }
+
         [TestMethod, ExpectedException(typeof(NotSupportedException))]
         public void FalsyCanCreateAWrapperTypeAndThrowNotSupportedExceptionsOnMissingParts()
         {

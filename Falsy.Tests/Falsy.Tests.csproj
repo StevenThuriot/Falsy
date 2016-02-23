@@ -57,6 +57,7 @@
   <ItemGroup>
     <Compile Include="AbstractParent.cs" />
     <Compile Include="FalsyTests.cs" />
+    <Compile Include="InternalClass.cs" />
     <Compile Include="IPerson.cs" />
     <Compile Include="Parent.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
