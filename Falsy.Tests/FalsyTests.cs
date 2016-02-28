@@ -1541,6 +1541,5 @@ namespace Falsy.Tests
             Assert.AreEqual(1, counter);
             Assert.AreEqual(NET.Falsy.undefined, result);
         }
-
     }
 }
